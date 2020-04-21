@@ -1,3 +1,6 @@
+const util = require('util');
+const execFile = util.promisify(require('child_process').execFile);
+const semver = require('semver');
 
 async function aggregateReleaseNote(currentRelease, previousRelease) {
   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
@@ -16,20 +19,20 @@ async function getPackageJsonByRelease(previousRelease, currentRelease) {
   // try to get the commit sha from the tags passed in
   // if not it defaults to the most recent release commits
   try {
-    await execFile("git", ["fetch", "--tags"]);
-    const { stdout } = await execFile("git", ["log", "--pretty=oneline", previousRelease + "..." + currentRelease]);
-    const logs = stdout.split("\n");
+    await execFile('git', ['fetch', '--tags']);
+    const { stdout } = await execFile('git', ['log', '--pretty=oneline', previousRelease + '...' + currentRelease]);
+    const logs = stdout.split('\n');
 
     latestReleaseSha = logs[1].slice(0,7);
     previousReleaseSha = logs[logs.length-2].slice(0,7);
 
   } catch(err) {
-    console.error("The release tags you have passed do not have a match. Using the two most recent releases instead.");
+    console.error('The release tags you have passed do not have a match. Using the two most recent releases instead.');
     try {
-      const { stdout } = await execFile("git", ["log", "--pretty=oneline", "-30"]);
-      const logs = stdout.split("\n");
+      const { stdout } = await execFile('git', ['log', '--pretty=oneline', '-30']);
+      const logs = stdout.split('\n');
       logs.forEach((log) => {
-        if(log.slice(41) === "Update dist for release") {
+        if(log.slice(41) === 'Update dist for release') {
           recentReleaseShas.push(log.slice(0, 7));
         }
       });
@@ -42,8 +45,8 @@ async function getPackageJsonByRelease(previousRelease, currentRelease) {
 
   let oldVerPackage, newVerPackage;
   try {
-    oldVerPackage = await getFileContentFromCommit(previousReleaseSha, "package.json");
-    newVerPackage = await getFileContentFromCommit(latestReleaseSha, "package.json");
+    oldVerPackage = await getFileContentFromCommit(previousReleaseSha, 'package.json');
+    newVerPackage = await getFileContentFromCommit(latestReleaseSha, 'package.json');
   } catch(err) {
     console.error('Error: getFileFileContentFromCommit', err);
   }
@@ -52,13 +55,13 @@ async function getPackageJsonByRelease(previousRelease, currentRelease) {
 
 async function getFileContentFromCommit(sha, filename) {
 
-  if (sha === "latest") {
-    const { stdout } = await execFile("cat", [filename]);
+  if (sha === 'latest') {
+    const { stdout } = await execFile('cat', [filename]);
     return JSON.parse(stdout);
   } else {
-    const revision = sha + ":" + filename;
+    const revision = sha + ':' + filename;
 
-    const { stdout } = await execFile("git", ["show", revision]);
+    const { stdout } = await execFile('git', ['show', revision]);
     return JSON.parse(stdout);
   }
 }
@@ -83,10 +86,10 @@ async function matchTags(repo, diff) {
     //the maximum number of match tags to return
     const upperBound = 10;
     let tags = [];
-    const res = await octokit.repos.listTags({ "owner": OWNER, "repo": repo });
+    const res = await octokit.repos.listTags({ 'owner': OWNER, 'repo': repo });
 
     for (let i = 0; i < res.data.length; i++) {
-      let currentRef = res.data[i].name.replace(/^v/, "");
+      let currentRef = res.data[i].name.replace(/^v/, '');
 
       if (diff.prevVer && currentRef === diff.prevVer || tags.length >= upperBound) {
         break;
@@ -116,14 +119,14 @@ async function getAllReleaseNotes(updatedDependencies) {
   await Promise.all(Object.keys(matchingTags).map(async function(package, index) {
     releaseNotes[package] = await Promise.all(matchingTags[package].map(async function(taggedRelease) {
       let version = taggedRelease.name;
-      let title = "";
-      let body = "";
+      let title = '';
+      let body = '';
 
       try {
         let release = await octokit.repos.getReleaseByTag({
-          "owner": OWNER,
-          "repo": package,
-          "tag": version
+          owner: OWNER,
+          repo: package,
+          tag: version
         });
 
         if (release.data.name) {
@@ -135,7 +138,7 @@ async function getAllReleaseNotes(updatedDependencies) {
         // console.error(`${package} ${version}: getReleaseByTag Error Code ${err.code}: ${err.message} `);
       }
 
-      return `[${package} ${version}${title ? " - " + title : ""}](https://github.com/canjs/${package}/releases/tag/${version})${body ? "\n" + body : ""}`;
+      return `[${package} ${version}${title ? ' - ' + title : ''}](https://github.com/canjs/${package}/releases/tag/${version})${body ? '\n' + body : ''}`;
     }));
   }));
 
