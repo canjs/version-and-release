@@ -1,17 +1,23 @@
 const util = require('util');
 const execFile = util.promisify(require('child_process').execFile);
 const semver = require('semver');
+const { initialize: initializeProvider } = require('./provider-github');
 
-async function aggregateReleaseNote(currentRelease, previousRelease) {
+async function aggregateReleaseNote(currentRelease, previousRelease, options) {
+  console.log(`[aggregateReleaseNote] ${currentRelease} - #{previousRelease}`);
+  const provider = initializeProvider(options.TOKEN);
+  console.log(`- provider initialized.`)
+
   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
   const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
-  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies);
-  const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease);
+  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { ...options, octokit: provider });
+  const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, options);
 
   return aggregateReleaseNote
 }
 
 async function getPackageJsonByRelease(previousRelease, currentRelease) {
+  console.log(`[getPackageJsonByRelease]...`)
   const recentReleaseShas = [];
   let latestReleaseSha;
   let previousReleaseSha;
@@ -27,6 +33,7 @@ async function getPackageJsonByRelease(previousRelease, currentRelease) {
     previousReleaseSha = logs[logs.length-2].slice(0,7);
 
   } catch(err) {
+    console.log(`*** ERROR`, err)
     console.error('The release tags you have passed do not have a match. Using the two most recent releases instead.');
     try {
       const { stdout } = await execFile('git', ['log', '--pretty=oneline', '-30']);
@@ -54,6 +61,7 @@ async function getPackageJsonByRelease(previousRelease, currentRelease) {
 }
 
 async function getFileContentFromCommit(sha, filename) {
+  console.log(`[getFileContentFromCommit]...`);
 
   if (sha === 'latest') {
     const { stdout } = await execFile('cat', [filename]);
@@ -67,6 +75,7 @@ async function getFileContentFromCommit(sha, filename) {
 }
 
 function getUpdatedDependencies(prevVer, currentVer) {
+  console.log(`[getUpdatedDependencies]...`);
   let updatedDependencies = {};
 
   for (let key in currentVer.dependencies) {
@@ -81,7 +90,8 @@ function getUpdatedDependencies(prevVer, currentVer) {
   return updatedDependencies;
 }
 
-async function matchTags(repo, diff) {
+async function matchTags(repo, diff, { octokit, OWNER }) {
+  console.log(`[matchTags]...`);
   try {
     //the maximum number of match tags to return
     const upperBound = 10;
@@ -104,12 +114,14 @@ async function matchTags(repo, diff) {
   }
 }
 
-async function getAllReleaseNotes(updatedDependencies) {
+async function getAllReleaseNotes(updatedDependencies, options) {
+  console.log(`[getAllReleaseNotes]...`);
+  const { OWNER, octokit } = options;
   const matchingTags = [];
   let releaseNotes = {};
   for (let key in updatedDependencies) {
     try {
-      matchingTags[key] = await matchTags(key, updatedDependencies[key]);
+      matchingTags[key] = await matchTags(key, updatedDependencies[key], options);
 
     } catch(err) {
       console.error('Error in getAllReleaseNotes', err);
@@ -145,7 +157,8 @@ async function getAllReleaseNotes(updatedDependencies) {
   return releaseNotes;
 }
 
-function createAggregateReleaseNote(allReleaseNotes, currentRelease) {
+function createAggregateReleaseNote(allReleaseNotes, currentRelease, { OWNER, REPO }) {
+  console.log(`[createAggregateReleaseNote]...`);
   let releaseNote = `# ${OWNER}/${REPO} ${currentRelease || 'INSERT VERSION HERE'} Release Notes \n`;
 
   let alphabetizedPackages = Object.keys(allReleaseNotes).sort();

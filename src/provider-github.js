@@ -1,6 +1,6 @@
-const Octokit = require('@octokit/rest');
+const { Octokit } = require('@octokit/rest');
 
-function initialize(token, { baseUrl='https://api.github.com', userAgent='CanJS Release Notes Script v2'}){
+function initialize(token, { baseUrl='https://api.github.com', userAgent='CanJS Release Notes Script v2'} = {}){
   const octokit = new Octokit({
     auth: token,
     userAgent,

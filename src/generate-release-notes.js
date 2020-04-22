@@ -16,7 +16,7 @@
  * ```
  */
 
-const { aggregateReleaseNote, postReleaseNote } = require('./generate-release-notes');
+const { aggregateReleaseNote, postReleaseNote } = require('./aggregate-release-notes');
 
 // Default to canjs/canjs repo
 const OWNER = 'canjs';
@@ -25,7 +25,8 @@ const TOKEN = process.argv[2];
 const currentRelease = process.argv[4];
 const previousRelease = process.argv[3];
 
+console.log(`*** Starting... ${OWNER}, ${REPO}, ${currentRelease}, ${previousRelease}`);
 
-const aggregatedReleaseNote = aggregateReleaseNote(currentRelease, previousRelease)
+const aggregatedReleaseNote = aggregateReleaseNote(currentRelease, previousRelease, { OWNER, REPO, TOKEN })
 
 postReleaseNote(aggregatedReleaseNote);

@@ -1,7 +1,7 @@
 {
   "name": "version-and-release",
   "version": "0.0.1",
-  "description": "Tools for versioning and releasing multirepo projects",
+  "description": "Tools for aggregating release notes for multirepo projects",
   "main": "src/index.js",
   "scripts": {
     "test": "jest"
@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@octokit/rest": "^17.5.1",
     "jest": "^25.4.0"
   }
 }
