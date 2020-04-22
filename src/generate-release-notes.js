@@ -19,20 +19,18 @@
  * // the default provider is github.
  * ```
  */
-
+const parseArgs = require('minimist');
 const { aggregateReleaseNote, postReleaseNote } = require('./aggregate-release-notes');
 
-// Default to canjs/canjs repo
-const OWNER = 'canjs';
-const REPO = 'canjs';
-const TOKEN = process.argv[2];
-const currentRelease = process.argv[4];
-const previousRelease = process.argv[3];
-
-// console.log(`*** Starting... ${OWNER}, ${REPO}, ${currentRelease}, ${previousRelease}`);
+const args = parseArgs(process.argv.slice(2), {alias: {template: 't', owner: 'o', repo: 'r', token: 'T'}});
+const {
+  _: [previousRelease, currentRelease],
+  token, owner = 'canjs', repo = 'canjs', template
+} = args;
+const options = { owner, repo, token, template };
 
 async function run(){
-  const aggregatedReleaseNote = await aggregateReleaseNote(currentRelease, previousRelease, { OWNER, REPO, TOKEN });
+  const aggregatedReleaseNote = await aggregateReleaseNote(currentRelease, previousRelease, options);
   postReleaseNote(aggregatedReleaseNote);
 }
 

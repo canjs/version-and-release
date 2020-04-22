@@ -1,7 +1,12 @@
-const { aggregateReleaseNote } = require('../src/aggregate-release-notes');
+// const all = require('../src/aggregate-release-notes');
+const { aggregateReleaseNote, getUpdatedDependencies } = require('../src/aggregate-release-notes');
+const mockPackageJson = require('./mocks/package-json.mock');
+const mockUpdatedDeps = require('./mocks/updated-deps.mock');
 
 describe('aggregate-release-notes', () => {
-  test('#aggregateReleaseNote', () => {
-    expect(aggregateReleaseNote(1, 2)).toBe(3);
+  describe('#getUpdatedDependencies', () => {
+    test('should return package json', () => {
+      expect(getUpdatedDependencies(mockPackageJson.previousRelease, mockPackageJson.currentRelease)).toEqual(mockUpdatedDeps);
+    })
   });
-})
+});

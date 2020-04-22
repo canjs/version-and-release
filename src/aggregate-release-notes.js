@@ -3,13 +3,21 @@ const execFile = util.promisify(require('child_process').execFile);
 const semver = require('semver');
 const { initialize: initializeProvider } = require('./provider-github');
 
+const DEBUG = false;
+const debug = (...args) => DEBUG && console.log.apply(console, args);
+
 async function aggregateReleaseNote(currentRelease, previousRelease, options) {
-  const provider = initializeProvider(options.TOKEN);
+  const provider = initializeProvider(options.token);
+  debug(`- provider initialized with token=${options.token}`);
 
   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
+  debug(`- fileContents:`, fileContents);
   const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
+  debug(`- updatedDependencies:`, updatedDependencies);
   const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { ...options, octokit: provider });
+  debug(`- allReleaseNotes:`, allReleaseNotes);
   const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, options);
+  debug(`- aggregateReleaseNote:`, aggregateReleaseNote);
 
   return aggregateReleaseNote
 }
@@ -83,12 +91,12 @@ function getUpdatedDependencies(prevVer, currentVer) {
   return updatedDependencies;
 }
 
-async function matchTags(repo, diff, { octokit, OWNER }) {
+async function matchTags(repo, diff, { octokit, owner }) {
   try {
     //the maximum number of match tags to return
     const upperBound = 10;
     let tags = [];
-    const res = await octokit.repos.listTags({ 'owner': OWNER, 'repo': repo });
+    const res = await octokit.repos.listTags({ 'owner': owner, 'repo': repo });
 
     for (let i = 0; i < res.data.length; i++) {
       let currentRef = res.data[i].name.replace(/^v/, '');
@@ -107,7 +115,7 @@ async function matchTags(repo, diff, { octokit, OWNER }) {
 }
 
 async function getAllReleaseNotes(updatedDependencies, options) {
-  const { OWNER, octokit } = options;
+  const { owner, octokit } = options;
   const matchingTags = [];
   let releaseNotes = {};
   for (let key in updatedDependencies) {
@@ -119,16 +127,16 @@ async function getAllReleaseNotes(updatedDependencies, options) {
     }
   }
 
-  await Promise.all(Object.keys(matchingTags).map(async function(package, index) {
-    releaseNotes[package] = await Promise.all(matchingTags[package].map(async function(taggedRelease) {
+  await Promise.all(Object.keys(matchingTags).map(async function(packageName, index) {
+    releaseNotes[packageName] = await Promise.all(matchingTags[packageName].map(async function(taggedRelease) {
       let version = taggedRelease.name;
       let title = '';
       let body = '';
 
       try {
         let release = await octokit.repos.getReleaseByTag({
-          owner: OWNER,
-          repo: package,
+          owner,
+          repo: packageName,
           tag: version
         });
 
@@ -141,22 +149,22 @@ async function getAllReleaseNotes(updatedDependencies, options) {
         // console.error(`${package} ${version}: getReleaseByTag Error Code ${err.code}: ${err.message} `);
       }
 
-      return `[${package} ${version}${title ? ' - ' + title : ''}](https://github.com/canjs/${package}/releases/tag/${version})${body ? '\n' + body : ''}`;
+      return `[${packageName} ${version}${title ? ' - ' + title : ''}](https://github.com/canjs/${packageName}/releases/tag/${version})${body ? '\n' + body : ''}`;
     }));
   }));
 
   return releaseNotes;
 }
 
-function createAggregateReleaseNote(allReleaseNotes, currentRelease, { OWNER, REPO }) {
-  let releaseNote = `# ${OWNER}/${REPO} ${currentRelease || 'INSERT VERSION HERE'} Release Notes \n`;
+function createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo }) {
+  let releaseNote = `# ${owner}/${repo} ${currentRelease || 'INSERT VERSION HERE'} Release Notes \n`;
 
   let alphabetizedPackages = Object.keys(allReleaseNotes).sort();
 
-  alphabetizedPackages.forEach(function(package) {
-    releaseNote = `${releaseNote} \n## [${package}](https://github.com/canjs/${package}/releases) \n`;
+  alphabetizedPackages.forEach(function(packageName) {
+    releaseNote = `${releaseNote} \n## [${packageName}](https://github.com/canjs/${packageName}/releases) \n`;
 
-    allReleaseNotes[package].forEach(function(note) {
+    allReleaseNotes[packageName].forEach(function(note) {
       if (note) {
         releaseNote = `${releaseNote} - ${note} \n`;
       }
@@ -172,5 +180,6 @@ function postReleaseNote(note) {
 
 module.exports = {
   aggregateReleaseNote,
+  getUpdatedDependencies,
   postReleaseNote
 };

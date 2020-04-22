@@ -20,10 +20,10 @@ function initialize(token, { baseUrl='https://api.github.com', userAgent='CanJS 
   });
   return octokit;
 }
-function getReleaseByTag(octokit, OWNER, package, version){
+function getReleaseByTag(octokit, OWNER, packageName, version){
   return octokit.repos.getReleaseByTag({
     "owner": OWNER,
-    "repo": package,
+    "repo": packageName,
     "tag": version
   });
 }
