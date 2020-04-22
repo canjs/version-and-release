@@ -3,22 +3,16 @@ const execFile = util.promisify(require('child_process').execFile);
 const semver = require('semver');
 const { initialize: initializeProvider } = require('./provider-github');
 
-const DEBUG = true;
+const DEBUG = false;
 const debug = (...args) => DEBUG && console.log.apply(console, args);
 
 async function aggregateReleaseNote(currentRelease, previousRelease, options) {
   const provider = initializeProvider(options.token);
-  debug(`- provider initialized with token=${options.token}`);
 
   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
-  // debug(`- fileContents:`, fileContents);
   const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
-  // debug(`- updatedDependencies:`, updatedDependencies);
   const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { ...options, octokit: provider });
-  // debug(`- allReleaseNotes:`, allReleaseNotes);
   const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, options);
-  debug(`- aggregateReleaseNote:`, aggregateReleaseNote);
-  return
 
   return aggregateReleaseNote
 }
