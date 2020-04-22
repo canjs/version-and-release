@@ -3,7 +3,7 @@ const execFile = util.promisify(require('child_process').execFile);
 const semver = require('semver');
 const { initialize: initializeProvider } = require('./provider-github');
 
-const DEBUG = false;
+const DEBUG = true;
 const debug = (...args) => DEBUG && console.log.apply(console, args);
 
 async function aggregateReleaseNote(currentRelease, previousRelease, options) {
@@ -11,13 +11,14 @@ async function aggregateReleaseNote(currentRelease, previousRelease, options) {
   debug(`- provider initialized with token=${options.token}`);
 
   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
-  debug(`- fileContents:`, fileContents);
+  // debug(`- fileContents:`, fileContents);
   const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
-  debug(`- updatedDependencies:`, updatedDependencies);
+  // debug(`- updatedDependencies:`, updatedDependencies);
   const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { ...options, octokit: provider });
-  debug(`- allReleaseNotes:`, allReleaseNotes);
+  // debug(`- allReleaseNotes:`, allReleaseNotes);
   const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, options);
   debug(`- aggregateReleaseNote:`, aggregateReleaseNote);
+  return
 
   return aggregateReleaseNote
 }
@@ -181,5 +182,6 @@ function postReleaseNote(note) {
 module.exports = {
   aggregateReleaseNote,
   getUpdatedDependencies,
+  createAggregateReleaseNote,
   postReleaseNote
 };
