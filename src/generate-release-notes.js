@@ -1,4 +1,8 @@
 /**
+ * Node script that aggregates release notes for CanJS dependencies in one markdown note.
+ * This note can be used for CanJS release notes or for general reference.
+ * You’ll need a personal access token to run this script: https://github.com/blog/1509-personal-api-tokens
+ *
  * To execute:
  * ```
  * node generate-release-notes.js <access token> <older version> <newer version> \
@@ -25,8 +29,11 @@ const TOKEN = process.argv[2];
 const currentRelease = process.argv[4];
 const previousRelease = process.argv[3];
 
-console.log(`*** Starting... ${OWNER}, ${REPO}, ${currentRelease}, ${previousRelease}`);
+// console.log(`*** Starting... ${OWNER}, ${REPO}, ${currentRelease}, ${previousRelease}`);
 
-const aggregatedReleaseNote = aggregateReleaseNote(currentRelease, previousRelease, { OWNER, REPO, TOKEN })
+async function run(){
+  const aggregatedReleaseNote = await aggregateReleaseNote(currentRelease, previousRelease, { OWNER, REPO, TOKEN });
+  postReleaseNote(aggregatedReleaseNote);
+}
 
-postReleaseNote(aggregatedReleaseNote);
+run();
