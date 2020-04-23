@@ -11,7 +11,7 @@ const mockAggregateReleaseNote = require('./mocks/aggregate-release-note.mock');
 
 describe('aggregate-release-notes', () => {
   describe('#getUpdatedDependencies', () => {
-    test('should return package json', () => {
+    test('should return updated deps', () => {
       expect(getUpdatedDependencies(mockPackageJson.previousRelease, mockPackageJson.currentRelease)).toEqual(mockUpdatedDeps);
     })
   });
