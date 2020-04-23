@@ -18,21 +18,26 @@ function initialize(token, { baseUrl='https://api.github.com', userAgent='CanJS 
       timeout: 0
     }
   });
-  return octokit;
+  return {
+    getReleaseByTag (...args) {
+      return getReleaseByTag.apply(null, [octokit, ...args]);
+    },
+    listTags (...args) {
+      return listTags.apply(null, [octokit, ...args]);
+    }
+  }
 }
-function getReleaseByTag(octokit, OWNER, packageName, version){
+function getReleaseByTag(octokit, owner, packageName, version){
   return octokit.repos.getReleaseByTag({
-    "owner": OWNER,
-    "repo": packageName,
-    "tag": version
+    owner,
+    repo: packageName,
+    tag: version
   });
 }
-function listTags(octokit, OWNER, repo){
-  return octokit.repos.listTags({ 'owner': OWNER, 'repo': repo });
+function listTags(octokit, owner, repo){
+  return octokit.repos.listTags({ owner, repo });
 }
 
 module.exports = {
-  initialize,
-  getReleaseByTag,
-  listTags,
-}
+  initialize
+};

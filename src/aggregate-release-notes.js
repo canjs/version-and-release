@@ -11,7 +11,7 @@ async function aggregateReleaseNote(currentRelease, previousRelease, options) {
 
   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
   const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
-  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { ...options, octokit: provider });
+  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { ...options, provider });
   const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, options);
 
   return aggregateReleaseNote
@@ -86,12 +86,12 @@ function getUpdatedDependencies(prevVer, currentVer) {
   return updatedDependencies;
 }
 
-async function matchTags(repo, diff, { octokit, owner }) {
+async function matchTags(repo, diff, { provider, owner }) {
   try {
     //the maximum number of match tags to return
     const upperBound = 10;
     let tags = [];
-    const res = await octokit.repos.listTags({ 'owner': owner, 'repo': repo });
+    const res = await provider.listTags(owner, repo);
 
     for (let i = 0; i < res.data.length; i++) {
       let currentRef = res.data[i].name.replace(/^v/, '');
@@ -110,7 +110,7 @@ async function matchTags(repo, diff, { octokit, owner }) {
 }
 
 async function getAllReleaseNotes(updatedDependencies, options) {
-  const { owner, octokit } = options;
+  const { owner, provider } = options;
   const matchingTags = [];
   let releaseNotes = {};
   for (let key in updatedDependencies) {
@@ -129,11 +129,7 @@ async function getAllReleaseNotes(updatedDependencies, options) {
       let body = '';
 
       try {
-        let release = await octokit.repos.getReleaseByTag({
-          owner,
-          repo: packageName,
-          tag: version
-        });
+        let release = await provider.getReleaseByTag(owner, packageName, version);
 
         if (release.data.name) {
           title = release.data.name;
