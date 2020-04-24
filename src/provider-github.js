@@ -34,8 +34,13 @@ function getReleaseByTag(octokit, owner, packageName, version){
     tag: version
   });
 }
-function listTags(octokit, owner, repo){
-  return octokit.repos.listTags({ owner, repo });
+function listTags(octokit, owner, repo, { per_page = 30, page = 1}){
+  return octokit.repos.listTags({
+    owner,
+    repo,
+    per_page,
+    page
+  });
 }
 
 module.exports = {

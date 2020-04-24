@@ -2,12 +2,14 @@
 const {
   aggregateReleaseNote,
   getUpdatedDependencies,
-  createAggregateReleaseNote
+  createAggregateReleaseNote,
+  filterTags
 } = require('../src/aggregate-release-notes');
 const mockPackageJson = require('./mocks/package-json.mock');
 const mockUpdatedDeps = require('./mocks/updated-deps.mock');
 const mockAllReleaseNotes = require('./mocks/all-release-notes.mock');
 const mockAggregateReleaseNote = require('./mocks/aggregate-release-note.mock');
+const mockListTags = require('./mocks/list-tags.mock');
 
 describe('aggregate-release-notes', () => {
   describe('#getUpdatedDependencies', () => {
@@ -25,6 +27,16 @@ describe('aggregate-release-notes', () => {
         createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo }).replace(/[\r]/g, '')
       ).toEqual(
         mockAggregateReleaseNote
+      );
+    })
+  });
+  describe('#filterTags', () => {
+    test('should return tags that match the diff', () => {
+      const diff = {currentVer: '3.1.4', prevVer: '3.1.2'};
+      expect(
+        filterTags(mockListTags, diff).map(t => t.name)
+      ).toEqual(
+        ['v3.1.3', 'v3.1.4']
       );
     })
   });

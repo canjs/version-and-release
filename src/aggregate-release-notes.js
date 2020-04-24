@@ -3,18 +3,47 @@ const execFile = util.promisify(require('child_process').execFile);
 const semver = require('semver');
 const { initialize: initializeProvider } = require('./provider-github');
 
-const DEBUG = false;
+const DEBUG = true;
 const debug = (...args) => DEBUG && console.log.apply(console, args);
 
-async function aggregateReleaseNote(currentRelease, previousRelease, options) {
+async function aggregateReleaseNote(currentRelease, previousRelease, { owner, token }) {
+  const provider = initializeProvider(token);
+
+  const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
+  const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
+  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, provider });
+  debug(`allReleaseNotes:`, allReleaseNotes);
+  return;
+  const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, provider });
+
+  return aggregateReleaseNote
+}
+
+/*
+ * Returns array of changes grouped by priority:
+ * {
+ *   major: [ change1, change2, ... ],
+ *   minor: [ change1, change2, ... ],
+ *   patch: [ change1, change2, ... ]
+ * }
+ *
+ * Where every change looks like:
+ * {
+ *   package,
+ *   previousRelease,
+ *   currentRelease,
+ *   previousReleaseSha,
+ *   currentReleaseSha,
+ *   title,
+ *   body
+ * }
+ */
+async function getDependenciesReleaseNotesData(currentRelease, previousRelease, options) {
   const provider = initializeProvider(options.token);
 
   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
   const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
-  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { ...options, provider });
-  const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, options);
-
-  return aggregateReleaseNote
+  return {};
 }
 
 async function getPackageJsonByRelease(previousRelease, currentRelease) {
@@ -86,30 +115,35 @@ function getUpdatedDependencies(prevVer, currentVer) {
   return updatedDependencies;
 }
 
+// diff :: {currentVer: '3.1.4', prevVer: '3.1.2'}
 async function matchTags(repo, diff, { provider, owner }) {
+  let res;
   try {
-    //the maximum number of match tags to return
-    const upperBound = 10;
-    let tags = [];
-    const res = await provider.listTags(owner, repo);
-
-    for (let i = 0; i < res.data.length; i++) {
-      let currentRef = res.data[i].name.replace(/^v/, '');
-
-      if (diff.prevVer && currentRef === diff.prevVer || tags.length >= upperBound) {
-        break;
-      }
-
-      tags.push(res.data[i]);
-    }
-    // sort in ascending order by ref
-    return tags.sort((v1, v2) => semver.gt(v1.name, v2.name));
+    res = await provider.listTags(owner, repo, {page: 6});
+    console.log(`allTags for ${repo} ${res.data.length}`, res.data);
+    return;
   } catch(err) {
     console.error('Error in matchTags', err);
   }
+  return filterTags(res.data, diff);
+}
+
+function filterTags(allTags, diff) {
+  //the maximum number of match tags to return
+  const upperBound = 10;
+
+  let tags = allTags.filter(tag => (
+    semver.satisfies(tag.name, `>${diff.prevVer} <=${diff.currentVer}`)
+  ));
+
+  // sort in ascending order by ref
+  return tags
+    .filter((t, i) => i <= upperBound)
+    .sort((v1, v2) => semver.gt(v1.name, v2.name));
 }
 
 async function getAllReleaseNotes(updatedDependencies, options) {
+  console.log(`updatedDependencies:`, updatedDependencies)
   const { owner, provider } = options;
   const matchingTags = [];
   let releaseNotes = {};
@@ -121,6 +155,9 @@ async function getAllReleaseNotes(updatedDependencies, options) {
       console.error('Error in getAllReleaseNotes', err);
     }
   }
+
+  console.log(`matchingTags:`, matchingTags)
+  return
 
   await Promise.all(Object.keys(matchingTags).map(async function(packageName, index) {
     releaseNotes[packageName] = await Promise.all(matchingTags[packageName].map(async function(taggedRelease) {
@@ -173,5 +210,6 @@ module.exports = {
   aggregateReleaseNote,
   getUpdatedDependencies,
   createAggregateReleaseNote,
-  postReleaseNote
+  postReleaseNote,
+  filterTags
 };
