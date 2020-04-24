@@ -24,7 +24,7 @@ describe('aggregate-release-notes', () => {
       const owner = 'canjs';
       const repo = 'canjs';
       expect(
-        createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo }).replace(/[\r]/g, '')
+        createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo })
       ).toEqual(
         mockAggregateReleaseNote
       );

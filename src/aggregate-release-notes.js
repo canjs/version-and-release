@@ -6,15 +6,15 @@ const { initialize: initializeProvider } = require('./provider-github');
 const DEBUG = true;
 const debug = (...args) => DEBUG && console.log.apply(console, args);
 
-async function aggregateReleaseNote(currentRelease, previousRelease, { owner, token }) {
+async function aggregateReleaseNote(currentRelease, previousRelease, { token, owner, repo }) {
   const provider = initializeProvider(token);
 
   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
   const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
   const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, provider });
-  debug(`allReleaseNotes:`, allReleaseNotes);
+  const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, provider, repo });
+  debug(`aggregateReleaseNote:`, aggregateReleaseNote);
   return;
-  const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, provider });
 
   return aggregateReleaseNote
 }
@@ -120,8 +120,6 @@ async function matchTags(repo, diff, { provider, owner }) {
   let res;
   try {
     res = await provider.listTags(owner, repo, {page: 6});
-    console.log(`allTags for ${repo} ${res.data.length}`, res.data);
-    return;
   } catch(err) {
     console.error('Error in matchTags', err);
   }
@@ -150,14 +148,10 @@ async function getAllReleaseNotes(updatedDependencies, options) {
   for (let key in updatedDependencies) {
     try {
       matchingTags[key] = await matchTags(key, updatedDependencies[key], options);
-
     } catch(err) {
       console.error('Error in getAllReleaseNotes', err);
     }
   }
-
-  console.log(`matchingTags:`, matchingTags)
-  return
 
   await Promise.all(Object.keys(matchingTags).map(async function(packageName, index) {
     releaseNotes[packageName] = await Promise.all(matchingTags[packageName].map(async function(taggedRelease) {
