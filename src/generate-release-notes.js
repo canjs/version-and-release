@@ -20,7 +20,7 @@
  * ```
  */
 const parseArgs = require('minimist');
-const { aggregateReleaseNote, postReleaseNote } = require('./aggregate-release-notes');
+const { getDependenciesReleaseNotesData, postReleaseNote } = require('./aggregate-release-notes');
 
 const args = parseArgs(process.argv.slice(2), {alias: {template: 't', owner: 'o', repo: 'r', token: 'T'}});
 const {
@@ -30,8 +30,8 @@ const {
 const options = { owner, repo, token, template };
 
 async function run(){
-  const aggregatedReleaseNote = await aggregateReleaseNote(currentRelease, previousRelease, options);
-  postReleaseNote(aggregatedReleaseNote);
+  const dependenciesReleaseNotesData = await getDependenciesReleaseNotesData(currentRelease, previousRelease, options);
+  postReleaseNote(dependenciesReleaseNotesData);
 }
 
 run();

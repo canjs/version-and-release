@@ -11,10 +11,8 @@ async function aggregateReleaseNote(currentRelease, previousRelease, { token, ow
 
   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
   const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
-  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, provider });
-  const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, provider, repo });
-  debug(`aggregateReleaseNote:`, aggregateReleaseNote);
-  return;
+  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, provider, format: formatAsString });
+  const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo, provider });
 
   return aggregateReleaseNote
 }
@@ -38,11 +36,13 @@ async function aggregateReleaseNote(currentRelease, previousRelease, { token, ow
  *   body
  * }
  */
-async function getDependenciesReleaseNotesData(currentRelease, previousRelease, options) {
-  const provider = initializeProvider(options.token);
+async function getDependenciesReleaseNotesData(currentRelease, previousRelease, { token, owner, repo }) {
+  const provider = initializeProvider(token);
 
   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
   const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
+  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, repo, provider });
+  debug(`allReleaseNotes`, allReleaseNotes);
   return {};
 }
 
@@ -115,7 +115,20 @@ function getUpdatedDependencies(prevVer, currentVer) {
   return updatedDependencies;
 }
 
-// diff :: {currentVer: '3.1.4', prevVer: '3.1.2'}
+/*
+ * diff :: {currentVer: '3.1.4', prevVer: '3.1.2'}
+ *
+ * returns [{
+ *    name: 'v3.1.3',
+ *    zipball_url: 'https://api.github.com/repos/canjs/can-stache-bindings/zipball/v3.1.3',
+ *    tarball_url: 'https://api.github.com/repos/canjs/can-stache-bindings/tarball/v3.1.3',
+ *    commit: {
+ *      sha: '9019cb2e9fbf82bcfd8c6b3dcc5f7d4ce9176b6f',
+ *      url: 'https://api.github.com/repos/canjs/can-stache-bindings/commits/9019cb2e9fbf82bcfd8c6b3dcc5f7d4ce9176b6f'
+ *    },
+ *    node_id: 'MDM6UmVmNTYzNDU0OTI6djMuMi4wLXByZS40'
+ * }, ...]
+ */
 async function matchTags(repo, diff, { provider, owner }) {
   let res;
   try {
@@ -140,22 +153,28 @@ function filterTags(allTags, diff) {
     .sort((v1, v2) => semver.gt(v1.name, v2.name));
 }
 
-async function getAllReleaseNotes(updatedDependencies, options) {
-  console.log(`updatedDependencies:`, updatedDependencies)
-  const { owner, provider } = options;
+function formatAsString (packageName, version, title, body) {
+  return `[${packageName} ${version}${title ? ' - ' + title : ''}](https://github.com/canjs/${packageName}/releases/tag/${version})${body ? '\n' + body : ''}`;
+}
+
+async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider, format }) {
+  console.log(`updatedDependencies:`, updatedDependencies);
   const matchingTags = [];
   let releaseNotes = {};
   for (let key in updatedDependencies) {
     try {
-      matchingTags[key] = await matchTags(key, updatedDependencies[key], options);
+      matchingTags[key] = await matchTags(key, updatedDependencies[key], { owner, repo, provider });
     } catch(err) {
       console.error('Error in getAllReleaseNotes', err);
     }
   }
 
-  await Promise.all(Object.keys(matchingTags).map(async function(packageName, index) {
-    releaseNotes[packageName] = await Promise.all(matchingTags[packageName].map(async function(taggedRelease) {
-      let version = taggedRelease.name;
+  await Promise.all(Object.keys(matchingTags).map(async function(packageName) {
+    releaseNotes[packageName] = await Promise.all(matchingTags[packageName].map(async function(taggedRelease, index) {
+      const version = taggedRelease.name;
+      const currentReleaseSha = taggedRelease.commit.sha;
+      const previousRelease = index > 0 && matchingTags[packageName][index - 1].name;
+      const previousReleaseSha = index > 0 && matchingTags[packageName][index - 1].commit.sha;
       let title = '';
       let body = '';
 
@@ -171,7 +190,25 @@ async function getAllReleaseNotes(updatedDependencies, options) {
         // console.error(`${package} ${version}: getReleaseByTag Error Code ${err.code}: ${err.message} `);
       }
 
-      return `[${packageName} ${version}${title ? ' - ' + title : ''}](https://github.com/canjs/${packageName}/releases/tag/${version})${body ? '\n' + body : ''}`;
+      const type = semver.patch(version) !== 0 && 'patch'
+        || semver.minor(version) && 'minor'
+        || semver.major(version) && 'major';
+
+      if (format) {
+        return format(packageName, version, title, body)
+      }
+
+      return {
+        packageName,
+        version,
+        type,
+        previousRelease,
+        currentRelease: version,
+        previousReleaseSha,
+        currentReleaseSha,
+        title,
+        body
+      };
     }));
   }));
 
@@ -201,6 +238,7 @@ function postReleaseNote(note) {
 }
 
 module.exports = {
+  getDependenciesReleaseNotesData,
   aggregateReleaseNote,
   getUpdatedDependencies,
   createAggregateReleaseNote,

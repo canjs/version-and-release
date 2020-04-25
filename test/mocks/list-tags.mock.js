@@ -6,7 +6,7 @@ module.exports = [
     commit:
     { sha: '9019cb2e9fbf82bcfd8c6b3dcc5f7d4ce9176b6f',
       url: 'https://api.github.com/repos/canjs/can-stache-bindings/commits/9019cb2e9fbf82bcfd8c6b3dcc5f7d4ce9176b6f' },
-  node_id: 'MDM6UmVmNTYzNDU0OTI6djMuMi4wLXByZS40' },
+    node_id: 'MDM6UmVmNTYzNDU0OTI6djMuMi4wLXByZS40' },
   { name: 'v3.2.0-pre.3',
     zipball_url: 'https://api.github.com/repos/canjs/can-stache-bindings/zipball/v3.2.0-pre.3',
     tarball_url: 'https://api.github.com/repos/canjs/can-stache-bindings/tarball/v3.2.0-pre.3',
