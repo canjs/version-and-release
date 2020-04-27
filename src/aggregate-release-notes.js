@@ -240,6 +240,7 @@ function groupByType(depsReleaseNotes) {
 }
 
 async function loadTemplateFn(templateFile) {
+  // todo: load the file from fs.
   return a => a;
 }
 
