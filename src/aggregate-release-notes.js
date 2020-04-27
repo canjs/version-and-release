@@ -6,16 +6,16 @@ const { initialize: initializeProvider } = require('./provider-github');
 const DEBUG = true;
 const debug = (...args) => DEBUG && console.log.apply(console, args);
 
-async function aggregateReleaseNote(currentRelease, previousRelease, { token, owner, repo }) {
-  const provider = initializeProvider(token);
-
-  const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
-  const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
-  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, provider, format: formatAsString });
-  const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo, provider });
-
-  return aggregateReleaseNote
-}
+// async function aggregateReleaseNote(currentRelease, previousRelease, { token, owner, repo }) {
+//   const provider = initializeProvider(token);
+//
+//   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
+//   const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
+//   const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, provider, format: formatAsString });
+//   const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo, provider });
+//
+//   return aggregateReleaseNote
+// }
 
 /*
  * Returns array of changes grouped by priority:
@@ -27,7 +27,7 @@ async function aggregateReleaseNote(currentRelease, previousRelease, { token, ow
  *
  * Where every change looks like:
  * {
- *   package,
+ *   packageName,
  *   previousRelease,
  *   currentRelease,
  *   previousReleaseSha,
@@ -39,10 +39,14 @@ async function aggregateReleaseNote(currentRelease, previousRelease, { token, ow
 async function getDependenciesReleaseNotesData(currentRelease, previousRelease, { token, owner, repo }) {
   const provider = initializeProvider(token);
 
-  const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
-  const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
-  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, repo, provider });
+  const packageJson = await getPackageJsonByRelease(previousRelease, currentRelease);
+  const updatedDependencies = getUpdatedDependencies(packageJson.previousRelease, packageJson.currentRelease);
+  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, repo, provider, format: formatAsString });
   debug(`allReleaseNotes`, allReleaseNotes);
+
+  // Group by type major|minor|patch:
+  const grouped = groupByType(allReleaseNotes);
+
   return {};
 }
 
@@ -104,6 +108,7 @@ function getUpdatedDependencies(prevVer, currentVer) {
   let updatedDependencies = {};
 
   for (let key in currentVer.dependencies) {
+    // Note: for a new dependency the prevVer will be undefined.
     if (!prevVer.dependencies[key] || (prevVer.dependencies[key] !== currentVer.dependencies[key])) {
       updatedDependencies[key] = {
         currentVer: currentVer.dependencies[key],
@@ -117,22 +122,12 @@ function getUpdatedDependencies(prevVer, currentVer) {
 
 /*
  * diff :: {currentVer: '3.1.4', prevVer: '3.1.2'}
- *
- * returns [{
- *    name: 'v3.1.3',
- *    zipball_url: 'https://api.github.com/repos/canjs/can-stache-bindings/zipball/v3.1.3',
- *    tarball_url: 'https://api.github.com/repos/canjs/can-stache-bindings/tarball/v3.1.3',
- *    commit: {
- *      sha: '9019cb2e9fbf82bcfd8c6b3dcc5f7d4ce9176b6f',
- *      url: 'https://api.github.com/repos/canjs/can-stache-bindings/commits/9019cb2e9fbf82bcfd8c6b3dcc5f7d4ce9176b6f'
- *    },
- *    node_id: 'MDM6UmVmNTYzNDU0OTI6djMuMi4wLXByZS40'
- * }, ...]
+ * Returns [{name: 'v3.1.3', zipball_url, commit, .., ...]
  */
 async function matchTags(repo, diff, { provider, owner }) {
   let res;
   try {
-    res = await provider.listTags(owner, repo, {page: 6});
+    res = await provider.listTags(owner, repo, {page1: 6});
   } catch(err) {
     console.error('Error in matchTags', err);
   }
@@ -143,8 +138,9 @@ function filterTags(allTags, diff) {
   //the maximum number of match tags to return
   const upperBound = 10;
 
+  // We keep prevVer (>=) in the list to be able to get `previousRelease` and `previousReleaseSha` in the next step.
   let tags = allTags.filter(tag => (
-    semver.satisfies(tag.name, `>${diff.prevVer} <=${diff.currentVer}`)
+    semver.satisfies(tag.name, `>=${diff.prevVer} <=${diff.currentVer}`)
   ));
 
   // sort in ascending order by ref
@@ -158,8 +154,7 @@ function formatAsString (packageName, version, title, body) {
 }
 
 async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider, format }) {
-  console.log(`updatedDependencies:`, updatedDependencies);
-  const matchingTags = [];
+  const matchingTags = {};
   let releaseNotes = {};
   for (let key in updatedDependencies) {
     try {
@@ -169,8 +164,14 @@ async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider, 
     }
   }
 
+  // matchingTags :: {<packageName>: [{name: <version>, commit, zipball_url, ...}, ...]}
   await Promise.all(Object.keys(matchingTags).map(async function(packageName) {
+    // At this step keep changes grouped by the package name:
     releaseNotes[packageName] = await Promise.all(matchingTags[packageName].map(async function(taggedRelease, index) {
+      // The 1st item is the prevVer that should be excluded:
+      if (index === 0) {
+        return null
+      }
       const version = taggedRelease.name;
       const currentReleaseSha = taggedRelease.commit.sha;
       const previousRelease = index > 0 && matchingTags[packageName][index - 1].name;
@@ -237,11 +238,22 @@ function postReleaseNote(note) {
   console.log(note);
 }
 
+// depsReleaseNotes :: {<packageName>: [ change1, change2, ...], ...}
+// Returns :: {<type> : [change, ...], ...}
+function groupByType(depsReleaseNotes) {
+  const flattenedChanges = Object.values(depsReleaseNotes).reduce((acc, arr) => [...acc, ...arr], []);
+  return flattenedChanges.reduce((acc, change) => {
+    acc[change.type].push(change);
+    return acc;
+  }, {major: [], minor: [], patch: []})
+}
+
 module.exports = {
   getDependenciesReleaseNotesData,
-  aggregateReleaseNote,
+  // aggregateReleaseNote,
   getUpdatedDependencies,
   createAggregateReleaseNote,
   postReleaseNote,
-  filterTags
+  filterTags,
+  groupByType,
 };
