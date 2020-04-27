@@ -3,20 +3,6 @@ const execFile = util.promisify(require('child_process').execFile);
 const semver = require('semver');
 const { initialize: initializeProvider } = require('./provider-github');
 
-const DEBUG = true;
-const debug = (...args) => DEBUG && console.log.apply(console, args);
-
-// async function aggregateReleaseNote(currentRelease, previousRelease, { token, owner, repo }) {
-//   const provider = initializeProvider(token);
-//
-//   const fileContents = await getPackageJsonByRelease(previousRelease, currentRelease);
-//   const updatedDependencies = getUpdatedDependencies(fileContents.previousRelease, fileContents.currentRelease);
-//   const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, provider, format: formatAsString });
-//   const aggregateReleaseNote = await createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo, provider });
-//
-//   return aggregateReleaseNote
-// }
-
 /*
  * Returns array of changes grouped by priority:
  * {
@@ -39,15 +25,19 @@ const debug = (...args) => DEBUG && console.log.apply(console, args);
 async function getDependenciesReleaseNotesData(currentRelease, previousRelease, { token, owner, repo }) {
   const provider = initializeProvider(token);
 
+  // Get package.json prev and current state:
   const packageJson = await getPackageJsonByRelease(previousRelease, currentRelease);
+
+  // Collect deps updates from git:
   const updatedDependencies = getUpdatedDependencies(packageJson.previousRelease, packageJson.currentRelease);
+
+  // Load release notes per tag:
   const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, repo, provider, format: formatAsString });
-  debug(`allReleaseNotes`, allReleaseNotes);
 
   // Group by type major|minor|patch:
-  const grouped = groupByType(allReleaseNotes);
+  const groupedReleaseNotes = groupByType(allReleaseNotes);
 
-  return {};
+  return groupedReleaseNotes;
 }
 
 async function getPackageJsonByRelease(previousRelease, currentRelease) {
@@ -168,7 +158,7 @@ async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider, 
   await Promise.all(Object.keys(matchingTags).map(async function(packageName) {
     // At this step keep changes grouped by the package name:
     releaseNotes[packageName] = await Promise.all(matchingTags[packageName].map(async function(taggedRelease, index) {
-      // The 1st item is the prevVer that should be excluded:
+      // The 1st item is the prevVer that should be excluded (it is just used for the next one to get its prev):
       if (index === 0) {
         return null
       }
@@ -213,7 +203,8 @@ async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider, 
     }));
   }));
 
-  return releaseNotes;
+  // Filter out unnecessary 1st item (which was a part of the main prev ver):
+  return releaseNotes.filter(n => !!n);
 }
 
 function createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo }) {
