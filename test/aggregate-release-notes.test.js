@@ -17,7 +17,7 @@ describe('aggregate-release-notes', () => {
   describe('#getUpdatedDependencies', () => {
     test('should return updated deps', () => {
       expect(getUpdatedDependencies(mockPackageJson.previousRelease, mockPackageJson.currentRelease)).toEqual(mockUpdatedDeps);
-    })
+    });
   });
   describe('#createAggregateReleaseNote', () => {
     test('should return a string with aggregated notes', () => {
@@ -30,7 +30,7 @@ describe('aggregate-release-notes', () => {
       ).toEqual(
         mockAggregateReleaseNote
       );
-    })
+    });
   });
   describe('#filterTags', () => {
     test('should return tags that match the diff', () => {
@@ -40,7 +40,7 @@ describe('aggregate-release-notes', () => {
       ).toEqual(
         ['v3.1.2', 'v3.1.3', 'v3.1.4']
       );
-    })
+    });
   });
   describe('#groupByType', () => {
     test('arranges deps changes into groups by type (major/minor/patch)', () => {
@@ -73,6 +73,12 @@ describe('aggregate-release-notes', () => {
         packageName: 'can-connect-feathers',
         currentRelease: 'v3.6.1'
       }));
-    })
+    });
+    test('groups a real list', () => {
+      const groupedRes = groupByType(mockAllReleaseNotesLong);
+      expect(groupedRes.major.length).toBe(0);
+      expect(groupedRes.minor.length).toBe(45);
+      expect(groupedRes.patch.length).toBe(22);
+    });
   });
 });
