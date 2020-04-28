@@ -144,6 +144,7 @@ move `can-observable-*` packages to development dependencies (`devDependencies`)
 
 ## can-view-live v5.0.4
 
-## can-queues v1.3.2
+## can-queues (v1.3.2)[link]
 
 ```
+## can-queues [v1.3.2](link)

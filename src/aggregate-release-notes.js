@@ -140,12 +140,7 @@ function filterTags(allTags, diff) {
     .sort((v1, v2) => semver.gt(v1.name, v2.name));
 }
 
-// Passing this fn as format to `getAllReleaseNotes` can be used for `createAggregateReleaseNote` (prev implementation).
-function formatAsString (packageName, version, title, body) {
-  return `[${packageName} ${version}${title ? ' - ' + title : ''}](https://github.com/canjs/${packageName}/releases/tag/${version})${body ? '\n' + body : ''}`;
-}
-
-async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider, format }) {
+async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider }) {
   const matchingTags = {};
   let releaseNotes = {};
   for (let key in updatedDependencies) {
@@ -173,6 +168,7 @@ async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider, 
 
       try {
         let release = await provider.getReleaseByTag(owner, packageName, version);
+        console.log(`release:::`, release)
 
         if (release.data.name) {
           title = release.data.name;
@@ -186,10 +182,6 @@ async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider, 
       const type = semver.patch(version) !== 0 && 'patch'
         || semver.minor(version) && 'minor'
         || semver.major(version) && 'major';
-
-      if (format) {
-        return format(packageName, version, title, body)
-      }
 
       return {
         packageName,
@@ -211,24 +203,6 @@ async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider, 
   return releaseNotes;
 }
 
-function createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo }) {
-  let releaseNote = `# ${owner}/${repo} ${currentRelease || 'INSERT VERSION HERE'} Release Notes \n`;
-
-  let alphabetizedPackages = Object.keys(allReleaseNotes).sort();
-
-  alphabetizedPackages.forEach(function(packageName) {
-    releaseNote = `${releaseNote} \n## [${packageName}](https://github.com/canjs/${packageName}/releases) \n`;
-
-    allReleaseNotes[packageName].forEach(function(note) {
-      if (note) {
-        releaseNote = `${releaseNote} - ${note} \n`;
-      }
-    });
-  });
-
-  return releaseNote;
-}
-
 function postReleaseNote(note) {
   console.log(note);
 }
@@ -246,8 +220,7 @@ function groupByType(depsReleaseNotes) {
 module.exports = {
   getDependenciesReleaseNotesData,
   getUpdatedDependencies,
-  createAggregateReleaseNote,
   postReleaseNote,
   filterTags,
-  groupByType,
+  groupByType
 };
