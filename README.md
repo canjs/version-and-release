@@ -2,7 +2,6 @@
 Tools for automating maintenance of CanJS packages
 
 ## Usage
-
 ```js
 const getDependenciesReleaseNotesData = require('version-and-release');
 const template = x => x;
@@ -15,6 +14,29 @@ const options = {
 };
 const output = getDependenciesReleaseNotesData('v6.4.0', 'v6.3.0', options);
 // >>> { major: [...], minor: [...], patch: [...] }
+```
+
+### Included template
+The included `src/release-template.js` template formats output like this:
+```
+# Major
+
+## [<packageName> <version> - <description>](url-to-release)
+<body>
+...
+
+# Minor
+
+## [<packageName> <version> - <description>](url-to-release)
+<body>
+...
+
+# Patch
+
+- [<packageName> <version> - <description>](url-to-release)
+
+- [<packageName> <version> - <description>](url-to-release)
+...
 ```
 
 ## CLI usage
