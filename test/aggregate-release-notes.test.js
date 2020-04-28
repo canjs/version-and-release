@@ -1,6 +1,5 @@
 // const all = require('../src/aggregate-release-notes');
 const {
-  aggregateReleaseNote,
   getUpdatedDependencies,
   createAggregateReleaseNote,
   filterTags,

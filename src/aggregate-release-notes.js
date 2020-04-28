@@ -4,7 +4,7 @@ const semver = require('semver');
 const { initialize: initializeProvider } = require('./provider-github');
 
 /*
- * Returns array of changes grouped by priority:
+ * Returns arrays of changes grouped by priority:
  * {
  *   major: [ change1, change2, ... ],
  *   minor: [ change1, change2, ... ],
@@ -32,7 +32,7 @@ async function getDependenciesReleaseNotesData(currentRelease, previousRelease, 
   const updatedDependencies = getUpdatedDependencies(packageJson.previousRelease, packageJson.currentRelease);
 
   // Load release notes per tag:
-  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, repo, provider, format: formatAsString });
+  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, repo, provider });
 
   // Group by type major|minor|patch:
   const groupedReleaseNotes = groupByType(allReleaseNotes);
@@ -139,6 +139,7 @@ function filterTags(allTags, diff) {
     .sort((v1, v2) => semver.gt(v1.name, v2.name));
 }
 
+// Passing this fn as format to `getAllReleaseNotes` can be used for `createAggregateReleaseNote` (prev implementation).
 function formatAsString (packageName, version, title, body) {
   return `[${packageName} ${version}${title ? ' - ' + title : ''}](https://github.com/canjs/${packageName}/releases/tag/${version})${body ? '\n' + body : ''}`;
 }
@@ -160,7 +161,7 @@ async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider, 
     releaseNotes[packageName] = await Promise.all(matchingTags[packageName].map(async function(taggedRelease, index) {
       // The 1st item is the prevVer that should be excluded (it is just used for the next one to get its prev):
       if (index === 0) {
-        return null
+        return;
       }
       const version = taggedRelease.name;
       const currentReleaseSha = taggedRelease.commit.sha;
@@ -201,10 +202,12 @@ async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider, 
         body
       };
     }));
+
+    // Filter out unnecessary 1st item:
+    releaseNotes[packageName].shift();
   }));
 
-  // Filter out unnecessary 1st item (which was a part of the main prev ver):
-  return releaseNotes.filter(n => !!n);
+  return releaseNotes;
 }
 
 function createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo }) {
@@ -241,7 +244,6 @@ function groupByType(depsReleaseNotes) {
 
 module.exports = {
   getDependenciesReleaseNotesData,
-  // aggregateReleaseNote,
   getUpdatedDependencies,
   createAggregateReleaseNote,
   postReleaseNote,
