@@ -3,7 +3,7 @@ Tools for automating maintenance of CanJS packages
 
 ## CLI usage:
 ```
-$ npm src/generate-release-notes.js \
+$ node src/generate-release-notes.js \
     --token=<token> \
     --repo=canjs \
     --owner=canjs \
@@ -14,7 +14,7 @@ $ npm src/generate-release-notes.js \
 
 or using single character aliases:
 ```
-$ npm src/generate-release-notes.js \
+$ node src/generate-release-notes.js \
     -T <token> \
     -r canjs \
     -o canjs \
