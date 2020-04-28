@@ -18,6 +18,8 @@
  * }
  */
 module.exports = deps => {
-  // E.g. take major and concat title and body for each change:
-  return deps.major.reduce((acc, change) => (acc + `#${change.title} \n${change.body}\n\n`), '');
+  // E.g. take only patches and concat title and body for each change:
+  return deps.patch.reduce((acc, change) => (
+    acc + `## ${change.packageName} ${change.version}${change.title ? ' - ' + change.title : ''} \n${change.body}\n\n`
+  ), '');
 }
