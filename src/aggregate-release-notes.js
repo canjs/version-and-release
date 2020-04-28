@@ -239,11 +239,6 @@ function groupByType(depsReleaseNotes) {
   }, {major: [], minor: [], patch: []})
 }
 
-async function loadTemplateFn(templateFile) {
-  // todo: load the file from fs.
-  return a => a;
-}
-
 module.exports = {
   getDependenciesReleaseNotesData,
   // aggregateReleaseNote,
@@ -252,5 +247,4 @@ module.exports = {
   postReleaseNote,
   filterTags,
   groupByType,
-  loadTemplateFn,
 };
