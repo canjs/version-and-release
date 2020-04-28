@@ -11,8 +11,7 @@ $ node src/generate-release-notes.js \
     --provider=github \
     v6.3.0 v6.4.0
 ```
-
-or using single character aliases:
+or using single char aliases:
 ```
 $ node src/generate-release-notes.js \
     -T <token> \
@@ -22,17 +21,17 @@ $ node src/generate-release-notes.js \
     -p github \
     v6.3.0 v6.4.0
 ```
-Note: default value for both `repo` and `owner` is "canjs".
+_Note: default value for both `repo` and `owner` is "canjs". Default (and the only implemented) git provider is "github"._
 
 ## Demo
 
-Checkout this repo locally and add it to canjs project as a local dep:
+1. Checkout this repo locally and add it to canjs project as a local dep:
 ```
 $ cd canjs
 $ npm add --save-dev "../version-and-release";
 ```
 
-Run script for release `v6.3.0`  to `v6.4.0`:
+2. Run script for CanJS (default repo) releases `v6.3.0`  to `v6.4.0`:
 ```
 $ node node_modules/version-and-release/src/generate-release-notes.js -T <token> \
 v6.3.0 v6.4.0
@@ -49,8 +48,8 @@ Intermediary info with updated dependencies:
 }
 ```
 
-Final output:
-```js
+3. Final output:
+```
 { 
   major: [],
   minor: [],
@@ -101,4 +100,34 @@ Final output:
        title: 'Fix a typo in the documentation',
        body: 'For documentation needs, fix the `isntance` wording to `instance`.' } ] 
 }
+```
+
+### Example using template:
+```
+$ node node_modules/version-and-release/src/generate-release-notes.js \
+    -T <token> \
+    --template="../test/sample-template.js" \
+    v6.3.0 v6.4.0
+```
+
+#### Output:
+
+```
+## can-event-queue v1.1.8 - Fix a typo in the documentation
+For documentation needs, fix the `isntance` wording to `instance`.
+
+## can-observable-array v1.0.7 - Update listening to event documentation
+Fix listening to event documentation.
+
+#77
+
+## can-connect v4.0.2 - Move packages as devDependencies
+move `can-observable-*` packages to development dependencies (`devDependencies`)
+
+#512
+
+## can-view-live v5.0.4
+
+## can-queues v1.3.2
+
 ```
