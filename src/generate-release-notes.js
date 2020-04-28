@@ -23,24 +23,27 @@
 const parseArgs = require('minimist');
 const { getDependenciesReleaseNotesData, postReleaseNote } = require('./aggregate-release-notes');
 
-// Get args from cli:
-const args = parseArgs(process.argv.slice(2), {alias: {template: 't', owner: 'o', repo: 'r', token: 'T'}});
-const {
-  _: [previousRelease, currentRelease],
-  token, owner = 'canjs', repo = 'canjs', template
-} = args;
+async function getParams() {
+  // Get args from cli:
+  const args = parseArgs(process.argv.slice(2), {alias: {template: 't', owner: 'o', repo: 'r', token: 'T'}});
+  const {
+    _: [previousRelease, currentRelease],
+    token, owner = 'canjs', repo = 'canjs', template: templateFile
+  } = args;
 
-// Main options:
-const options = { owner, repo, token, template };
+  const templateFn = templateFile && await require(templateFile);
+
+  return [
+    previousRelease,
+    currentRelease,
+    { owner, repo, token, template: templateFn }
+  ];
+}
 
 async function run(){
+  const [previousRelease, currentRelease, options] = await getParams();
+
   let dependenciesReleaseNotesData = await getDependenciesReleaseNotesData(currentRelease, previousRelease, options);
-
-  const templateFn = options.template && await require(options.template);
-
-  if (templateFn) {
-    dependenciesReleaseNotesData = templateFn(dependenciesReleaseNotesData);
-  }
 
   postReleaseNote(dependenciesReleaseNotesData);
 }
