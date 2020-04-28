@@ -28,7 +28,7 @@ const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
 
 function formatChange ({packageName, version, htmlUrl, title, body}, priority) {
   return priority === 'patch'
-    ? `- [${packageName} ${version}${title ? ' - ' + title : ''}](${htmlUrl})}`
+    ? `- [${packageName} ${version}${title ? ' - ' + title : ''}](${htmlUrl})`
     : `## [${packageName} ${version}${title ? ' - ' + title : ''}](${htmlUrl})${body ? '\n' + body : ''}`;
 }
 
