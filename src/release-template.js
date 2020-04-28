@@ -1,4 +1,4 @@
-/**
+/*
  * Input:
  * ```
  * const dependenciesReleaseNotesData =
@@ -17,39 +17,36 @@
  *    currentRelease,
  *    previousReleaseSha,
  *    currentReleaseSha,
+ *    htmlUrl,
  *    title,
  *    body
  * }
  * ```
  */
 
-function formatNote (packageName, version, title, body) {
-  return `[${packageName} ${version}${title ? ' - ' + title : ''}](https://github.com/canjs/${packageName}/releases/tag/${version})${body ? '\n' + body : ''}`;
-}
-
-function formatReleaseNotes(allReleaseNotes) {
-  let releaseNote = '';
-
-  let alphabetizedPackages = Object.keys(allReleaseNotes).sort();
-
-  alphabetizedPackages.forEach(function(packageName) {
-    releaseNote = `${releaseNote} \n## [${packageName}](https://github.com/canjs/${packageName}/releases) \n`;
-
-    allReleaseNotes[packageName].forEach(function(note) {
-      if (note) {
-        releaseNote = `${releaseNote} - ${note} \n`;
-      }
-    });
-  });
-
-  return releaseNote;
-}
-
 const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
 
+function formatChange ({packageName, version, htmlUrl, title, body}, priority) {
+  return priority === 'patch'
+    ? `- [${packageName} ${version}${title ? ' - ' + title : ''}](${htmlUrl})}`
+    : `## [${packageName} ${version}${title ? ' - ' + title : ''}](${htmlUrl})${body ? '\n' + body : ''}`;
+}
+
+function formatChanges(changes, priority) {
+  const alphabetizedChanges = changes.sort((a, b) => a.packageName > b.packageName);
+  const notes = alphabetizedChanges.map(change => formatChange(change, priority));
+  return notes.join('\n\n');
+}
+
 module.exports = releaseNotes => {
-  return Object.entries().reduce((output, [priority, changes]) => {
-    // wip
-    return `${output} # ${capitalize(priority)}\n\n`;
-  }, '')
+  const formattedReleaseNotes = Object.entries(releaseNotes).map(([priority, changes]) => {
+    const formattedNotes = formatChanges(changes, priority);
+    return `# ${capitalize(priority)}\n\n${formattedNotes}`;
+  });
+  return formattedReleaseNotes.join('\n\n');
+
+  // return Object.entries(releaseNotes).reduce((output, [priority, changes]) => {
+  //   const formattedNotes = formatReleaseNotes(changes, priority);
+  //   return `${output}\n# ${capitalize(priority)}\n\n ${formattedNotes}`;
+  // }, '')
 };
