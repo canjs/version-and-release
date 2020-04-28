@@ -4,7 +4,7 @@ Tools for automating maintenance of CanJS packages
 ## Usage
 
 ```js
-const { getDependenciesReleaseNotesData } = require('./src/aggregate-release-notes');
+const getDependenciesReleaseNotesData = require('version-and-release');
 const template = x => x;
 const options = {
   token: "your github token",
