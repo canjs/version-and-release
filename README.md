@@ -1,7 +1,23 @@
 # version-and-release
 Tools for automating maintenance of CanJS packages
 
-## CLI usage:
+## Usage
+
+```js
+const { getDependenciesReleaseNotesData } = require('./src/aggregate-release-notes');
+const template = x => x;
+const options = {
+  token: "your github token",
+  provider: "github",
+  owner: "canjs",
+  repo: "canjs",
+  template
+};
+const output = getDependenciesReleaseNotesData('v6.4.0', 'v6.3.0', options);
+// >>> { major: [...], minor: [...], patch: [...] }
+```
+
+## CLI usage
 ```
 $ node src/generate-release-notes.js \
     --token=<token> \
