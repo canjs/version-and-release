@@ -169,7 +169,6 @@ async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider }
 
       try {
         let release = await provider.getReleaseByTag(owner, packageName, version);
-        // console.log(`release:::`, release)
 
         if (release.data.name) {
           title = release.data.name;

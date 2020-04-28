@@ -3,7 +3,7 @@ Tools for automating maintenance of CanJS packages
 
 ## Usage
 ```js
-const getDependenciesReleaseNotesData = require('version-and-release');
+const getReleaseNotes = require('version-and-release');
 const template = x => x;
 const options = {
   token: "your github token",
@@ -12,7 +12,7 @@ const options = {
   repo: "canjs",
   template
 };
-const output = getDependenciesReleaseNotesData('v6.4.0', 'v6.3.0', options);
+const output = getReleaseNotes('v6.4.0', 'v6.3.0', options);
 // >>> { major: [...], minor: [...], patch: [...] }
 ```
 
