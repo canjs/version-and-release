@@ -1,4 +1,3 @@
-// const all = require('../src/aggregate-release-notes');
 const {
   getUpdatedDependencies,
   createAggregateReleaseNote,
@@ -6,7 +5,6 @@ const {
   groupByType,
 } = require('../src/aggregate-release-notes');
 const mockPackageJson = require('./mocks/package-json.mock');
-const mockUpdatedDeps = require('./mocks/updated-deps.mock');
 const mockAllReleaseNotes = require('./mocks/all-release-notes.mock');
 const mockAllReleaseNotesLong = require('./mocks/all-release-notes-long.mock');
 const mockAggregateReleaseNote = require('./mocks/aggregate-release-note.mock');
@@ -15,20 +13,14 @@ const mockListTags = require('./mocks/list-tags.mock');
 describe('aggregate-release-notes', () => {
   describe('#getUpdatedDependencies', () => {
     test('should return updated deps', () => {
-      expect(getUpdatedDependencies(mockPackageJson.previousRelease, mockPackageJson.currentRelease)).toEqual(mockUpdatedDeps);
-    });
-  });
-  describe('#createAggregateReleaseNote', () => {
-    test('should return a string with aggregated notes', () => {
-      const allReleaseNotes = mockAllReleaseNotes;
-      const currentRelease = 'v3.8.1';
-      const owner = 'canjs';
-      const repo = 'canjs';
-      expect(
-        createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo })
-      ).toEqual(
-        mockAggregateReleaseNote
-      );
+      const res = getUpdatedDependencies(mockPackageJson.previousRelease, mockPackageJson.currentRelease);
+      const expected = {
+        'can-stache-bindings': {
+          currentVer: '3.1.4',
+          prevVer: '3.1.2'
+        }
+      };
+      expect(res).toEqual(expected);
     });
   });
   describe('#filterTags', () => {
@@ -78,6 +70,19 @@ describe('aggregate-release-notes', () => {
       expect(groupedRes.major.length).toBe(0);
       expect(groupedRes.minor.length).toBe(45);
       expect(groupedRes.patch.length).toBe(22);
+    });
+  });
+  describe('#createAggregateReleaseNote', () => {
+    test('should return a string with aggregated notes', () => {
+      const allReleaseNotes = mockAllReleaseNotes;
+      const currentRelease = 'v3.8.1';
+      const owner = 'canjs';
+      const repo = 'canjs';
+      expect(
+        createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo })
+      ).toEqual(
+        mockAggregateReleaseNote
+      );
     });
   });
 });
