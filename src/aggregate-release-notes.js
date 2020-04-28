@@ -165,14 +165,16 @@ async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider }
       const previousReleaseSha = index > 0 && matchingTags[packageName][index - 1].commit.sha;
       let title = '';
       let body = '';
+      let htmlUrl = '';
 
       try {
         let release = await provider.getReleaseByTag(owner, packageName, version);
-        console.log(`release:::`, release)
+        // console.log(`release:::`, release)
 
         if (release.data.name) {
           title = release.data.name;
           body = release.data.body;
+          htmlUrl = release.data.html_url;
         }
 
       } catch(err) {
@@ -191,6 +193,7 @@ async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider }
         currentRelease: version,
         previousReleaseSha,
         currentReleaseSha,
+        htmlUrl,
         title,
         body
       };
