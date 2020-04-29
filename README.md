@@ -17,7 +17,7 @@ const output = getReleaseNotes('v6.4.0', 'v6.3.0', options);
 ```
 
 ### Included template
-The included `src/release-template.js` template formats output like this:
+The included `src/release-template.js` template formats output like this ([demo](test/release-template-demo.md)):
 ```
 # Major
 
