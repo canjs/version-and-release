@@ -40,13 +40,11 @@ function formatChanges(changes, priority) {
 
 module.exports = releaseNotes => {
   const formattedReleaseNotes = Object.entries(releaseNotes).map(([priority, changes]) => {
+    if (!changes.length) {
+      return;
+    }
     const formattedNotes = formatChanges(changes, priority);
     return `# ${capitalize(priority)}\n\n${formattedNotes}`;
-  });
+  }).filter(note => !!note);
   return formattedReleaseNotes.join('\n\n');
-
-  // return Object.entries(releaseNotes).reduce((output, [priority, changes]) => {
-  //   const formattedNotes = formatReleaseNotes(changes, priority);
-  //   return `${output}\n# ${capitalize(priority)}\n\n ${formattedNotes}`;
-  // }, '')
 };
