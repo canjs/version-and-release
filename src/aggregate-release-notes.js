@@ -23,7 +23,7 @@ const unit = x => x;
  *   body
  * }
  */
-async function getDependenciesReleaseNotesData(currentRelease, previousRelease, { token, owner, repo, template = unit }) {
+async function getDependenciesReleaseNotesData(previousRelease, currentRelease, { token, owner, repo, template = unit }) {
   const provider = initializeProvider(token);
 
   // Get package.json prev and current state:
@@ -31,6 +31,8 @@ async function getDependenciesReleaseNotesData(currentRelease, previousRelease, 
 
   // Collect deps updates from git:
   const updatedDependencies = getUpdatedDependencies(packageJson.previousRelease, packageJson.currentRelease);
+  console.log(`updatedDependencies`, updatedDependencies)
+  return
 
   // Load release notes per tag:
   const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, repo, provider });

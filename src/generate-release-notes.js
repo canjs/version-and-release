@@ -43,7 +43,7 @@ async function getParams() {
 async function run(){
   const [previousRelease, currentRelease, options] = await getParams();
 
-  let dependenciesReleaseNotesData = await getDependenciesReleaseNotesData(currentRelease, previousRelease, options);
+  let dependenciesReleaseNotesData = await getDependenciesReleaseNotesData(previousRelease, currentRelease, options);
 
   postReleaseNote(dependenciesReleaseNotesData);
 }

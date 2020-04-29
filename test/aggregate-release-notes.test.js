@@ -5,9 +5,7 @@ const {
   groupByType,
 } = require('../src/aggregate-release-notes');
 const mockPackageJson = require('./mocks/package-json.mock');
-const mockAllReleaseNotes = require('./mocks/all-release-notes.mock');
 const mockAllReleaseNotesLong = require('./mocks/all-release-notes-long.mock');
-const mockAggregateReleaseNote = require('./mocks/aggregate-release-note.mock');
 const mockListTags = require('./mocks/list-tags.mock');
 
 describe('aggregate-release-notes', () => {
@@ -25,7 +23,7 @@ describe('aggregate-release-notes', () => {
   });
   describe('#filterTags', () => {
     test('should return tags that match the diff', () => {
-      const diff = {currentVer: '3.1.4', prevVer: '3.1.2'};
+      const diff = {prevVer: '3.1.2', currentVer: '3.1.4'};
       expect(
         filterTags(mockListTags, diff).map(t => t.name)
       ).toEqual(
@@ -70,19 +68,6 @@ describe('aggregate-release-notes', () => {
       expect(groupedRes.major.length).toBe(0);
       expect(groupedRes.minor.length).toBe(45);
       expect(groupedRes.patch.length).toBe(22);
-    });
-  });
-  describe('#createAggregateReleaseNote', () => {
-    test('should return a string with aggregated notes', () => {
-      const allReleaseNotes = mockAllReleaseNotes;
-      const currentRelease = 'v3.8.1';
-      const owner = 'canjs';
-      const repo = 'canjs';
-      expect(
-        createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo })
-      ).toEqual(
-        mockAggregateReleaseNote
-      );
     });
   });
 });

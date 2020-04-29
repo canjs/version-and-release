@@ -56,7 +56,7 @@ Details of the changes
 
 # Patch
 
-- [can-connect v1.2.3 - Some changes](https://github.com/canjs/can-connect/releases/tag/v1.2.3)}`;
+- [can-connect v1.2.3 - Some changes](https://github.com/canjs/can-connect/releases/tag/v1.2.3)`;
 
     expect(result).toEqual(expected);
   })

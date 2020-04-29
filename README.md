@@ -12,7 +12,7 @@ const options = {
   repo: "canjs",
   template
 };
-const output = getReleaseNotes('v6.4.0', 'v6.3.0', options);
+const output = getReleaseNotes('v6.3.0', 'v6.4.0', options);   // prevVer, curVer
 // >>> { major: [...], minor: [...], patch: [...] }
 ```
 
