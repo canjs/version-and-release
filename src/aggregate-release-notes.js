@@ -2,7 +2,7 @@ const util = require('util');
 const execFile = util.promisify(require('child_process').execFile);
 const semver = require('semver');
 const { initialize: initializeProvider } = require('./provider-github')
-const unit = x => x;
+const defaultTemplate = require('./release-template');
 
 /*
  * Returns arrays of changes grouped by priority:
@@ -23,7 +23,7 @@ const unit = x => x;
  *   body
  * }
  */
-async function getDependenciesReleaseNotesData(previousRelease, currentRelease, { token, owner, repo, template = unit }) {
+async function getDependenciesReleaseNotesData(previousRelease, currentRelease, { token, owner, repo, template = defaultTemplate }) {
   const provider = initializeProvider(token);
 
   // Get package.json prev and current state:
@@ -31,8 +31,6 @@ async function getDependenciesReleaseNotesData(previousRelease, currentRelease, 
 
   // Collect deps updates from git:
   const updatedDependencies = getUpdatedDependencies(packageJson.previousRelease, packageJson.currentRelease);
-  console.log(`updatedDependencies`, updatedDependencies)
-  return
 
   // Load release notes per tag:
   const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, repo, provider });
