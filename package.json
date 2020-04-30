@@ -17,7 +17,7 @@
     "test": "jest"
   },
   "bin": {
-    "generate-release-notes": "./bin/generate-release-notes.js"
+    "generate-release-notes": "./bin/generate-release-notes"
   },
   "license": "MIT",
   "bugs": {

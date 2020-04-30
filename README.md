@@ -52,7 +52,7 @@ Function `getReleaseNotes` takes 3 arguments:
 
 ## CLI usage
 ```
-$ node src/generate-release-notes.js \
+$ ./bin/generate-release-notes \
     --token=<token> \
     --repo=canjs \
     --owner=canjs \
@@ -62,7 +62,7 @@ $ node src/generate-release-notes.js \
 ```
 or using single char aliases:
 ```
-$ node src/generate-release-notes.js \
+$ ./bin/generate-release-notes \
     -T <token> \
     -r canjs \
     -o canjs \
