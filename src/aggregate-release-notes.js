@@ -152,7 +152,7 @@ function filterTags(allTags, diff, { maxTagsToInclude = 10 } = {}) {
 }
 
 async function getAllReleaseNotes(updatedDependencies, options) {
-  const { owner, repo, provider } = options;
+  const { owner, provider } = options;
   const matchingTags = {};
   let releaseNotes = {};
   for (let key in updatedDependencies) {
