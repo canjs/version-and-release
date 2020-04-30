@@ -23,7 +23,17 @@ const defaultTemplate = require('./release-template');
  *   body
  * }
  */
-async function getDependenciesReleaseNotesData(previousRelease, currentRelease, { token, owner, repo, template = defaultTemplate }) {
+async function getDependenciesReleaseNotesData(previousRelease, currentRelease, options) {
+  const  {
+    token,
+    owner,
+    repo,
+    template = defaultTemplate,
+    maxTagsToLoad = 30,      // load from github per package.
+    maxTagsToInclude = 10,   // include per package.
+  } = options;
+
+  // todo: grab value from the options to use the correct provider adapter (e.g. gitlab).
   const provider = initializeProvider(token);
 
   // Get package.json prev and current state:
@@ -33,7 +43,7 @@ async function getDependenciesReleaseNotesData(previousRelease, currentRelease, 
   const updatedDependencies = getUpdatedDependencies(packageJson.previousRelease, packageJson.currentRelease);
 
   // Load release notes per tag:
-  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, repo, provider });
+  const allReleaseNotes = await getAllReleaseNotes(updatedDependencies, { owner, repo, provider, maxTagsToLoad, maxTagsToInclude });
 
   // Group by type major|minor|patch:
   const groupedReleaseNotes = groupByType(allReleaseNotes);
@@ -115,20 +125,19 @@ function getUpdatedDependencies(prevVer, currentVer) {
  * diff :: {currentVer: '3.1.4', prevVer: '3.1.2'}
  * Returns [{name: 'v3.1.3', zipball_url, commit, .., ...]
  */
-async function matchTags(repo, diff, { provider, owner }) {
+async function matchTags(repo, diff, { provider, owner, maxTagsToLoad, maxTagsToInclude }) {
   let res;
   try {
-    res = await provider.listTags(owner, repo, {page1: 6});
+    res = await provider.listTags(owner, repo, { per_page: maxTagsToLoad });
+    console.log(res);
+    return
   } catch(err) {
     console.error('Error in matchTags', err);
   }
-  return filterTags(res.data, diff);
+  return filterTags(res.data, diff, { maxTagsToInclude });
 }
 
-function filterTags(allTags, diff) {
-  //the maximum number of match tags to return
-  const upperBound = 10;
-
+function filterTags(allTags, diff, { maxTagsToInclude = 10 } = {}) {
   // We keep prevVer (>=) in the list to be able to get `previousRelease` and `previousReleaseSha` in the next step.
   let tags = allTags.filter(tag => (
     semver.satisfies(tag.name, `>=${diff.prevVer} <=${diff.currentVer}`)
@@ -136,16 +145,17 @@ function filterTags(allTags, diff) {
 
   // sort in ascending order by ref
   return tags
-    .filter((t, i) => i <= upperBound)
+    .filter((t, i) => i <= maxTagsToInclude)
     .sort((v1, v2) => semver.gt(v1.name, v2.name));
 }
 
-async function getAllReleaseNotes(updatedDependencies, { owner, repo, provider }) {
+async function getAllReleaseNotes(updatedDependencies, options) {
+  const { owner, repo, provider } = options;
   const matchingTags = {};
   let releaseNotes = {};
   for (let key in updatedDependencies) {
     try {
-      matchingTags[key] = await matchTags(key, updatedDependencies[key], { owner, repo, provider });
+      matchingTags[key] = await matchTags(key, updatedDependencies[key], options);
     } catch(err) {
       console.error('Error in getAllReleaseNotes', err);
     }
