@@ -34,7 +34,7 @@ function formatChange ({packageName, version, htmlUrl, title, body}, priority) {
 }
 
 function formatChanges(changes, priority) {
-  const alphabetizedChanges = changes.sort((a, b) => a.packageName > b.packageName);
+  const alphabetizedChanges = changes.sort((a, b) => a.packageName > b.packageName ? 1 : -1);
   const notes = alphabetizedChanges.map(change => formatChange(change, priority));
   return notes.join('\n\n');
 }

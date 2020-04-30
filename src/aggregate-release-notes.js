@@ -146,7 +146,9 @@ function filterTags(allTags, diff, { maxTagsToInclude = 10 } = {}) {
   // sort in ascending order by ref
   return tags
     .filter((t, i) => i <= maxTagsToInclude)
-    .sort((v1, v2) => semver.gt(v1.name, v2.name));
+    .sort((v1, v2) => (
+      semver.gt(v1.name, v2.name) ? 1 : -1
+    ));
 }
 
 async function getAllReleaseNotes(updatedDependencies, options) {
