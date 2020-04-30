@@ -171,8 +171,9 @@ async function getAllReleaseNotes(updatedDependencies, options) {
       }
       const version = taggedRelease.name;
       const currentReleaseSha = taggedRelease.commit.sha;
-      const previousRelease = index > 0 && matchingTags[packageName][index - 1].name;
-      const previousReleaseSha = index > 0 && matchingTags[packageName][index - 1].commit.sha;
+      const previousReleaseItem = index > 0 && matchingTags[packageName][index - 1];
+      const previousRelease = previousReleaseItem && previousReleaseItem.name;
+      const previousReleaseSha = previousReleaseItem && previousReleaseItem.commit.sha;
       let title = '';
       let body = '';
       let htmlUrl = '';
