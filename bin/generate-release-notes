@@ -23,7 +23,7 @@
  * ```
  */
 const parseArgs = require('minimist');
-const { getDependenciesReleaseNotesData, postReleaseNote } = require('./aggregate-release-notes');
+const { getDependenciesReleaseNotesData, postReleaseNote } = require('../src/aggregate-release-notes');
 
 async function getParams() {
   // Get args from cli:

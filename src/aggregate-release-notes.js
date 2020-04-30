@@ -129,8 +129,6 @@ async function matchTags(repo, diff, { provider, owner, maxTagsToLoad, maxTagsTo
   let res;
   try {
     res = await provider.listTags(owner, repo, { per_page: maxTagsToLoad });
-    console.log(res);
-    return
   } catch(err) {
     console.error('Error in matchTags', err);
   }
