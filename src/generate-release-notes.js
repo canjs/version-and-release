@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * Node script that aggregates release notes for CanJS dependencies and groups them by type (major|minor|patch).
  * Then this group can be passed to a template for customization.

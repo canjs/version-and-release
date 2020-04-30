@@ -16,6 +16,9 @@
     "lint": "eslint --ext=js . ",
     "test": "jest"
   },
+  "bin": {
+    "generate-notes": "./src/generate-release-notes.js"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/canjs/version-and-release/issues"
