@@ -4,20 +4,17 @@ Tools for automating maintenance of CanJS packages
 ## Usage
 ```js
 const getReleaseNotes = require('version-and-release');
-const template = x => x;
 const options = {
   token: "your github token",
-  provider: "github",
   owner: "canjs",
   repo: "canjs",
-  template
 };
-const output = getReleaseNotes('v6.3.0', 'v6.4.0', options);   // prevVer, curVer
-// >>> { major: [...], minor: [...], patch: [...] }
+const output = getReleaseNotes('v6.3.0', 'v6.4.0', options);
+// >>> "# Major \n ## [can-connect v2.0.0](https://github.com/canjs/can-connect/releases/tag/v6.0.0) ..."
 ```
 
-### Included template
-The included `src/release-template.js` template formats output like this ([demo](test/release-template-demo.md)):
+### Default template
+The default template `src/release-template.js` formats output like this ([demo](test/release-template-demo.md)):
 ```
 # Major
 
@@ -38,6 +35,20 @@ The included `src/release-template.js` template formats output like this ([demo]
 - [<packageName> <version> - <description>](url-to-release)
 ...
 ```
+
+### All options:
+
+Function `getReleaseNotes` takes 3 arguments:
+1. Previous release version.
+2. Current release version.
+3. Options, an object with the following props:
+- `token`, a string with auth token (for GitHub see https://github.com/blog/1509-personal-api-tokens);
+- `owner`, a string with owner account name;
+- `repo`, a string with repository name;
+- `provider`, a string to choose what git provider to use (e.g. "github, "gitlab"); default "github";
+- `template`, a function that should expect changes grouped by priority (see [default template](src/release-template.js));
+- `maxTagsToLoad`, a number that limits how many tags to load per dependency package; default 30, for GitHub max is 100;
+- `maxTagsToInclude`, a number that limits how many releases of every dependency package to include; default 10. 
 
 ## CLI usage
 ```

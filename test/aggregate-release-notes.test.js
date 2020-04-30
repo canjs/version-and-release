@@ -1,21 +1,40 @@
 const {
   getUpdatedDependencies,
-  createAggregateReleaseNote,
   filterTags,
   groupByType,
 } = require('../src/aggregate-release-notes');
 const mockPackageJson = require('./mocks/package-json.mock');
-const mockAllReleaseNotesLong = require('./mocks/all-release-notes-long.mock');
+const mockAllReleaseNotes = require('./mocks/all-release-notes.mock');
 const mockListTags = require('./mocks/list-tags.mock');
 
 describe('aggregate-release-notes', () => {
   describe('#getUpdatedDependencies', () => {
     test('should return updated deps', () => {
+      const packageJsonPrev = {
+        dependencies: { 'can-connect': '1.0.0' }
+      };
+      const packageJsonCurrent = {
+        dependencies: { 'can-connect': '1.1.0' }
+      };
+      const res = getUpdatedDependencies(packageJsonPrev, packageJsonCurrent);
+      const expected = {
+        'can-connect': {
+          prevVer: '1.0.0',
+          currentVer: '1.1.0'
+        }
+      };
+      expect(res).toEqual(expected);
+    });
+    test('should return updated deps (long fixture)', () => {
       const res = getUpdatedDependencies(mockPackageJson.previousRelease, mockPackageJson.currentRelease);
       const expected = {
         'can-stache-bindings': {
-          currentVer: '3.1.4',
-          prevVer: '3.1.2'
+          prevVer: '3.1.2',
+          currentVer: '3.1.4'
+        },
+        'can-control': {
+          prevVer: '3.0.10',
+          currentVer: '3.0.11'
         }
       };
       expect(res).toEqual(expected);
@@ -64,7 +83,7 @@ describe('aggregate-release-notes', () => {
       }));
     });
     test('groups a real list', () => {
-      const groupedRes = groupByType(mockAllReleaseNotesLong);
+      const groupedRes = groupByType(mockAllReleaseNotes);
       expect(groupedRes.major.length).toBe(0);
       expect(groupedRes.minor.length).toBe(45);
       expect(groupedRes.patch.length).toBe(22);

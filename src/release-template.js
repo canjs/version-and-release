@@ -12,7 +12,8 @@
  * Each change:
  * ```
  * {
- *    package,
+ *    packageName,
+ *    version,
  *    previousRelease,
  *    currentRelease,
  *    previousReleaseSha,

@@ -1,5 +1,5 @@
 module.exports = {
-  'can-component': [],
+  'can-component': [], // Empty list can be returned if targeted tags are outside of the loaded page size. Try to increase `maxTagsToLoad` value.
   'can-compute':
   [ { name: 'v3.1.0',
     zipball_url: 'https://api.github.com/repos/canjs/can-compute/zipball/v3.1.0',
