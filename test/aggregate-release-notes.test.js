@@ -41,7 +41,28 @@ describe('aggregate-release-notes', () => {
     });
   });
   describe('#filterTags', () => {
-    test('should return tags that match the diff', () => {
+    test('should filter and sort tags', () => {
+      const tags = [{name: 'v1.0.0'}, {name: 'v3.0.0'}, {name: 'v2.0.0'}];
+      const diff = {prevVer: 'v1.0.0', currentVer: 'v3.0.0'};
+      expect(
+        filterTags(tags, diff).map(t => t.name)
+      ).toEqual(['v1.0.0', 'v2.0.0', 'v3.0.0']);
+    });
+    test('should filter and sort tags (without v pref in the diff)', () => {
+      const tags = [{name: 'v1.0.0'}, {name: 'v3.0.0'}, {name: 'v2.0.0'}];
+      const diff = {prevVer: '1.0.0', currentVer: '3.0.0'};
+      expect(
+        filterTags(tags, diff).map(t => t.name)
+      ).toEqual(['v1.0.0', 'v2.0.0', 'v3.0.0']);
+    });
+    test('should filter and sort tags mixed priorities', () => {
+      const tags = [{name: 'v1.0.0'}, {name: 'v1.1.0'}, {name: 'v2.1.0'}, {name: 'v2.1.3'}, {name: 'v2.0.0'}];
+      const diff = {prevVer: 'v1.1.0', currentVer: 'v2.1.0'};
+      expect(
+        filterTags(tags, diff).map(t => t.name)
+      ).toEqual(['v1.1.0', 'v2.0.0', 'v2.1.0']);
+    });
+    test('should work against fixtures', () => {
       const diff = {prevVer: '3.1.2', currentVer: '3.1.4'};
       expect(
         filterTags(mockListTags, diff).map(t => t.name)

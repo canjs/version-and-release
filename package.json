@@ -21,10 +21,13 @@
     "url": "https://github.com/canjs/version-and-release/issues"
   },
   "homepage": "https://canjs.com",
-  "devDependencies": {
+  "dependencies": {
     "@octokit/rest": "^17.5.1",
+    "minimist": "^1.2.5",
+    "semver": "^7.3.2"
+  },
+  "devDependencies": {
     "eslint": "^6.8.0",
-    "jest": "^25.4.0",
-    "minimist": "^1.2.5"
+    "jest": "^25.4.0"
   }
 }
