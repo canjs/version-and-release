@@ -1,1 +1,1 @@
-require('./generate-release-notes');
+module.exports = require('./aggregate-release-notes').getDependenciesReleaseNotesData;

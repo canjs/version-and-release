@@ -1,5 +1,5 @@
-/**
- * Example:
+/*
+ * Input:
  * ```
  * const dependenciesReleaseNotesData =
  * {
@@ -12,17 +12,40 @@
  * Each change:
  * ```
  * {
- *    package,
+ *    packageName,
+ *    version,
  *    previousRelease,
  *    currentRelease,
  *    previousReleaseSha,
  *    currentReleaseSha,
+ *    htmlUrl,
  *    title,
  *    body
  * }
  * ```
  */
 
-module.exports = (dependenciesReleaseNotesData) => `
-   // some release data
-`;
+const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
+
+function formatChange ({packageName, version, htmlUrl, title, body}, priority) {
+  return priority === 'patch'
+    ? `- [${packageName} ${version}${title ? ' - ' + title : ''}](${htmlUrl})`
+    : `## [${packageName} ${version}${title ? ' - ' + title : ''}](${htmlUrl})${body ? '\n' + body : ''}`;
+}
+
+function formatChanges(changes, priority) {
+  const alphabetizedChanges = changes.sort((a, b) => a.packageName > b.packageName ? 1 : -1);
+  const notes = alphabetizedChanges.map(change => formatChange(change, priority));
+  return notes.join('\n\n');
+}
+
+module.exports = releaseNotes => {
+  const formattedReleaseNotes = Object.entries(releaseNotes).map(([priority, changes]) => {
+    if (!changes.length) {
+      return;
+    }
+    const formattedNotes = formatChanges(changes, priority);
+    return `# ${capitalize(priority)}\n\n${formattedNotes}`;
+  }).filter(note => !!note);
+  return formattedReleaseNotes.join('\n\n');
+};

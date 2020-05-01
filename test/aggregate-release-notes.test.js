@@ -1,31 +1,113 @@
-// const all = require('../src/aggregate-release-notes');
 const {
-  aggregateReleaseNote,
   getUpdatedDependencies,
-  createAggregateReleaseNote
+  filterTags,
+  groupByType,
 } = require('../src/aggregate-release-notes');
 const mockPackageJson = require('./mocks/package-json.mock');
-const mockUpdatedDeps = require('./mocks/updated-deps.mock');
 const mockAllReleaseNotes = require('./mocks/all-release-notes.mock');
-const mockAggregateReleaseNote = require('./mocks/aggregate-release-note.mock');
+const mockListTags = require('./mocks/list-tags.mock');
 
 describe('aggregate-release-notes', () => {
   describe('#getUpdatedDependencies', () => {
     test('should return updated deps', () => {
-      expect(getUpdatedDependencies(mockPackageJson.previousRelease, mockPackageJson.currentRelease)).toEqual(mockUpdatedDeps);
-    })
+      const packageJsonPrev = {
+        dependencies: { 'can-connect': '1.0.0' }
+      };
+      const packageJsonCurrent = {
+        dependencies: { 'can-connect': '1.1.0' }
+      };
+      const res = getUpdatedDependencies(packageJsonPrev, packageJsonCurrent);
+      const expected = {
+        'can-connect': {
+          prevVer: '1.0.0',
+          currentVer: '1.1.0'
+        }
+      };
+      expect(res).toEqual(expected);
+    });
+    test('should return updated deps (long fixture)', () => {
+      const res = getUpdatedDependencies(mockPackageJson.previousRelease, mockPackageJson.currentRelease);
+      const expected = {
+        'can-stache-bindings': {
+          prevVer: '3.1.2',
+          currentVer: '3.1.4'
+        },
+        'can-control': {
+          prevVer: '3.0.10',
+          currentVer: '3.0.11'
+        }
+      };
+      expect(res).toEqual(expected);
+    });
   });
-  describe('#createAggregateReleaseNote', () => {
-    test('should return a string with aggregated notes', () => {
-      const allReleaseNotes = mockAllReleaseNotes;
-      const currentRelease = 'v3.8.1';
-      const owner = 'canjs';
-      const repo = 'canjs';
+  describe('#filterTags', () => {
+    test('should filter and sort tags', () => {
+      const tags = [{name: 'v1.0.0'}, {name: 'v3.0.0'}, {name: 'v2.0.0'}];
+      const diff = {prevVer: 'v1.0.0', currentVer: 'v3.0.0'};
       expect(
-        createAggregateReleaseNote(allReleaseNotes, currentRelease, { owner, repo }).replace(/[\r]/g, '')
+        filterTags(tags, diff).map(t => t.name)
+      ).toEqual(['v1.0.0', 'v2.0.0', 'v3.0.0']);
+    });
+    test('should filter and sort tags (without v pref in the diff)', () => {
+      const tags = [{name: 'v1.0.0'}, {name: 'v3.0.0'}, {name: 'v2.0.0'}];
+      const diff = {prevVer: '1.0.0', currentVer: '3.0.0'};
+      expect(
+        filterTags(tags, diff).map(t => t.name)
+      ).toEqual(['v1.0.0', 'v2.0.0', 'v3.0.0']);
+    });
+    test('should filter and sort tags mixed priorities', () => {
+      const tags = [{name: 'v1.0.0'}, {name: 'v1.1.0'}, {name: 'v2.1.0'}, {name: 'v2.1.3'}, {name: 'v2.0.0'}];
+      const diff = {prevVer: 'v1.1.0', currentVer: 'v2.1.0'};
+      expect(
+        filterTags(tags, diff).map(t => t.name)
+      ).toEqual(['v1.1.0', 'v2.0.0', 'v2.1.0']);
+    });
+    test('should work against fixtures', () => {
+      const diff = {prevVer: '3.1.2', currentVer: '3.1.4'};
+      expect(
+        filterTags(mockListTags, diff).map(t => t.name)
       ).toEqual(
-        mockAggregateReleaseNote
+        ['v3.1.2', 'v3.1.3', 'v3.1.4']
       );
-    })
+    });
+  });
+  describe('#groupByType', () => {
+    test('arranges deps changes into groups by type (major/minor/patch)', () => {
+      const depsReleaseNotes = {
+        'can-connect-feathers': [{
+          packageName: 'can-connect-feathers',
+          currentRelease: 'v3.6.0',
+          type: 'minor'
+        }, {
+          packageName: 'can-connect-feathers',
+          currentRelease: 'v3.6.1',
+          type: 'patch'
+        }],
+        'can-connect': [{
+          packageName: 'can-connect',
+          currentRelease: 'v2.0.0',
+          type: 'major'
+        }]
+      };
+      const groupedRes = groupByType(depsReleaseNotes)
+      expect(groupedRes.major[0]).toEqual(expect.objectContaining({
+        packageName: 'can-connect',
+        currentRelease: 'v2.0.0'
+      }));
+      expect(groupedRes.minor[0]).toEqual(expect.objectContaining({
+        packageName: 'can-connect-feathers',
+        currentRelease: 'v3.6.0'
+      }));
+      expect(groupedRes.patch[0]).toEqual(expect.objectContaining({
+        packageName: 'can-connect-feathers',
+        currentRelease: 'v3.6.1'
+      }));
+    });
+    test('groups a real list', () => {
+      const groupedRes = groupByType(mockAllReleaseNotes);
+      expect(groupedRes.major.length).toBe(0);
+      expect(groupedRes.minor.length).toBe(45);
+      expect(groupedRes.patch.length).toBe(22);
+    });
   });
 });

@@ -1,16 +1,36 @@
 {
   "name": "version-and-release",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Tools for maintaining releases of a multi-repo project",
   "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/canjs/version-and-release.git"
+  },
+  "author": {
+    "name": "Bitovi",
+    "email": "contact@bitovi.com",
+    "web": "http://bitovi.com/"
+  },
   "scripts": {
+    "lint": "eslint --ext=js . ",
     "test": "jest"
   },
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
+  "bin": {
+    "generate-release-notes": "./bin/generate-release-notes"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/canjs/version-and-release/issues"
+  },
+  "homepage": "https://canjs.com",
+  "dependencies": {
     "@octokit/rest": "^17.5.1",
-    "jest": "^25.4.0",
-    "minimist": "^1.2.5"
+    "minimist": "^1.2.5",
+    "semver": "^7.3.2"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "jest": "^25.4.0"
   }
 }
