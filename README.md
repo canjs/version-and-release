@@ -1,7 +1,16 @@
 # version-and-release
-Tools for automating maintenance of CanJS packages
+Tools for automating maintenance of a multi-repo project.
+
+The main export (and the included `bin/generate-release-notes` script) generates release notes of all the dependency 
+changes that you main package release contains. 
+
+The script compares `package.json` files from your previous version and the current one, finds all updated dependencies.
+Then gets all the tags that the dependencies changes contain, and loads their release notes. 
+The output of the script is a string containing grouped by priority (major|minor|patch) release notes.
+The output can be customized with a template (see `template` option).
 
 ## Usage
+To generate release notes of all the dependency changes that you main package release contains:
 ```js
 const getReleaseNotes = require('version-and-release');
 const options = {
@@ -12,6 +21,7 @@ const options = {
 const output = getReleaseNotes('v6.3.0', 'v6.4.0', options);
 // >>> "# Major \n ## [can-connect v2.0.0](https://github.com/canjs/can-connect/releases/tag/v6.0.0) ..."
 ```
+_Note: default value for both `repo` and `owner` is "canjs". Default (and the only implemented) git provider is "github"._
 
 ### Default template
 The default template `src/release-template.js` formats output like this ([demo](test/release-template-demo.md)):
@@ -51,8 +61,9 @@ Function `getReleaseNotes` takes 3 arguments:
 - `maxTagsToInclude`, a number that limits how many releases of every dependency package to include; default 10. 
 
 ## CLI usage
+After adding the package to you dev dependencies you can access the node script from `node_modules/.bin` folder:
 ```
-$ ./bin/generate-release-notes \
+$ node_modules/.bin/generate-release-notes \
     --token=<token> \
     --repo=canjs \
     --owner=canjs \
@@ -62,7 +73,7 @@ $ ./bin/generate-release-notes \
 ```
 or using single char aliases:
 ```
-$ ./bin/generate-release-notes \
+$ node_modules/.bin/generate-release-notes \
     -T <token> \
     -r canjs \
     -o canjs \
@@ -70,23 +81,22 @@ $ ./bin/generate-release-notes \
     -p github \
     v6.3.0 v6.4.0
 ```
-_Note: default value for both `repo` and `owner` is "canjs". Default (and the only implemented) git provider is "github"._
 
 ## Demo
 
-1. Checkout this repo locally and add it to canjs project as a local dep:
+1. Add the package to your project:
 ```
 $ cd canjs
-$ npm add --save-dev "../version-and-release";
+$ npm add --save-dev "version-and-release";
 ```
 
 2. Run script for CanJS (default repo) releases `v6.3.0`  to `v6.4.0`:
 ```
-$ node node_modules/version-and-release/src/generate-release-notes.js -T <token> \
+$ node_modules/.bin/generate-release-notes -T <token> \
 v6.3.0 v6.4.0
 ```
 
-Intermediary info with updated dependencies:
+Intermediary info with updated dependencies looks like this:
 ```js
 { 
   'can-connect': { currentVer: '4.0.2', prevVer: '4.0.1' },
@@ -97,7 +107,9 @@ Intermediary info with updated dependencies:
 }
 ```
 
-3. Final output:
+3. The output that gets passed to the template script is below.
+
+You can also provide a path to your own template using `--template` option, otherwise the default template will be used.
 ```
 { 
   major: [],
@@ -111,6 +123,7 @@ Intermediary info with updated dependencies:
        previousReleaseSha: '273bb9710742e7ef128cca712f6c43759e95d68c',
        currentReleaseSha: 'd541e32aaefb07e917b454fab343a535cda04d17',
        title: 'Update listening to event documentation',
+       htmlUrl: 'https://github.com/canjs/can-observable-array/releases/tag/v1.0.6',
        body: 'Fix listening to event documentation.\r\n\r\n#77 ' },
      { packageName: 'can-connect',
        version: 'v4.0.2',
@@ -120,6 +133,7 @@ Intermediary info with updated dependencies:
        previousReleaseSha: 'dfdd0efd9c4f75a3235b103a8f75a235580dfa43',
        currentReleaseSha: '1b63e95ec9794231d367f6f77774634d4f7e783b',
        title: 'Move packages as devDependencies ',
+       htmlUrl: 'https://github.com/canjs/can-connect/releases/tag/v4.0.2',
        body: 'move `can-observable-*` packages to development dependencies (`devDependencies`)\r\n\r\n#512' },
      { packageName: 'can-view-live',
        version: 'v5.0.4',
@@ -150,34 +164,3 @@ Intermediary info with updated dependencies:
        body: 'For documentation needs, fix the `isntance` wording to `instance`.' } ] 
 }
 ```
-
-### Example using template:
-```
-$ node node_modules/version-and-release/src/generate-release-notes.js \
-    -T <token> \
-    --template="../test/sample-template.js" \
-    v6.3.0 v6.4.0
-```
-
-#### Output:
-
-```
-## can-event-queue v1.1.8 - Fix a typo in the documentation
-For documentation needs, fix the `isntance` wording to `instance`.
-
-## can-observable-array v1.0.7 - Update listening to event documentation
-Fix listening to event documentation.
-
-#77
-
-## can-connect v4.0.2 - Move packages as devDependencies
-move `can-observable-*` packages to development dependencies (`devDependencies`)
-
-#512
-
-## can-view-live v5.0.4
-
-## can-queues (v1.3.2)[link]
-
-```
-## can-queues [v1.3.2](link)
